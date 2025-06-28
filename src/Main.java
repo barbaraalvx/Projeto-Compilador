@@ -25,6 +25,8 @@ public class Main {
 
         //Gera o arquivo de saída passando o conteudo do arquivo
         AssemblyFileWriter.generate("p1.s", content);
+
+        System.out.println("Compilação concluída. Arquivo gerado: p1.s");
     }
 
     public class DigitValidator {
