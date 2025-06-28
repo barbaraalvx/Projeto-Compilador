@@ -11,6 +11,18 @@ Este projeto é um compilador básico para a linguagem CI (Constantes Inteiras),
 
 O programa faz a leitura de um arquivo com uma constante inteira (42, 123, etc.) e verifica se está correto. Se estiver, é exibida uma mensagem de sucesso e o arquivo Assembly (.s) é gerado. Se não estiver, quando o texto contém letras, por exemplo, o compilador informa o erro.
 
+## Classes da versão:
+
+Na versão inicial, o compilador da linguagem CI possui 2 classes de utilidade: FileReaderUtil e AssemblyFileWriter. 
+
+### FileReaderUtil
+
+A classe FileReaderUtil é responsável pela leitura do arquivo .TXT (entre as opções presentes em inputs) passado como argumento na função principal.
+
+### AssemblyFileWriter
+
+A classe AssemblyFileWriter é responsável pela escrita do código assembly e possui apenas o método generate.
+
 ## Como executar:
 
 ### 1. Build da imagem Docker
