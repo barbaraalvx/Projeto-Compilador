@@ -7,9 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 public class Main {
 
-    private static int linhaAtual = 0;
-    private static int colunaAtual = 0;
-
     public static void main(String[] args) {
         if (args.length == 0) {
             System.out.println("File not specified.");
@@ -19,59 +16,64 @@ public class Main {
         String content = FileReaderUtil.readFile(args[0]);
 
         if (content.isBlank()) {
-            System.out.println("he specified file is empty.");
+            System.out.println("The specified file is empty.");
             return;
         }
 
         List<Token> tokens = tokenize(content);
-        tokens.add(new Token(TypeEnum.EOF, new Position(content.length(), linhaAtual, colunaAtual)));
 
         tokens.forEach(System.out::println);
     }
 
-
-
-
     public static List<Token> tokenize(String content) {
+        int row = 0;
+        int column = 0;
+        int index = 0;
+
         List<Token> tokens = new ArrayList<>();
 
-        for (int i = 0; i < content.length(); i++) {
-            char c = content.charAt(i);
+        while (index < content.length()) {
+            char c = content.charAt(index);
 
             if (c == '\n') {
-                linhaAtual++;
-                colunaAtual = 0;
+                row++;
+                column = 0;
+                index++;
                 continue;
             }
 
-            if (c == ' ') {
-                colunaAtual++;
+            if (Character.isWhitespace(c)) {
+                column++;
+                index++;
                 continue;
             }
 
-            Position pos = new Position(i, linhaAtual, colunaAtual);
+            Position currentPos = new Position(index, row, column);
 
             if (isSingleCharToken(c)) {
-                tokens.add(addSingleCharToken(c, pos));
+                tokens.add(addSingleCharToken(c, currentPos));
+                index++;
+                column++;
             } else if (Character.isDigit(c)) {
-                int startIndex = i;
-                int startColuna = colunaAtual;
+                int startIndex = index;
+                int startColumn = column;
                 StringBuilder number = new StringBuilder();
 
-                while (i < content.length() && Character.isDigit(content.charAt(i))) {
-                    number.append(content.charAt(i));
-                    i++;
-                    colunaAtual++;
+                while (index < content.length() && Character.isDigit(content.charAt(index))) {
+                    number.append(content.charAt(index));
+                    index++;
+                    column++;
                 }
-                i--;
 
-                Position numberPos = new Position(startIndex, linhaAtual, startColuna);
+                Position numberPos = new Position(startIndex, row, startColumn);
                 tokens.add(new Token(TypeEnum.DIGITO, number.toString(), numberPos));
-                continue;
+            } else {
+                System.err.println("Erro Léxico: Caractere inesperado '" + c + "' na posição " + currentPos);
+                index++;
+                column++;
             }
-
-            colunaAtual++;
         }
+        tokens.add(new Token(TypeEnum.EOF, new Position(index, row, column)));
 
         return tokens;
     }
@@ -85,12 +87,12 @@ public class Main {
 
     private static Token addSingleCharToken(char c, Position pos) {
         return switch (c) {
-            case '(' -> new Token(TypeEnum.ABRE_PARENTESES, pos);
-            case ')' -> new Token(TypeEnum.FECHA_PARENTESES, pos);
-            case '+' -> new Token(TypeEnum.SOMA, pos);
-            case '-' -> new Token(TypeEnum.SUBTRACAO, pos);
-            case '*' -> new Token(TypeEnum.MULTIPLICACAO, pos);
-            case '/' -> new Token(TypeEnum.DIVISAO, pos);
+            case '(' -> new Token(TypeEnum.ABRE_PARENTESES, Character.toString(c), pos);
+            case ')' -> new Token(TypeEnum.FECHA_PARENTESES, Character.toString(c), pos);
+            case '+' -> new Token(TypeEnum.SOMA, Character.toString(c), pos);
+            case '-' -> new Token(TypeEnum.SUBTRACAO, Character.toString(c), pos);
+            case '*' -> new Token(TypeEnum.MULTIPLICACAO, Character.toString(c), pos);
+            case '/' -> new Token(TypeEnum.DIVISAO, Character.toString(c), pos);
             default -> throw new IllegalArgumentException("Token inesperado: " + c);
         };
     }

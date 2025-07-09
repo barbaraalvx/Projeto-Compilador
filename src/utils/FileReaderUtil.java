@@ -7,8 +7,13 @@ public class FileReaderUtil {
         StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String linha;
+            boolean primeiraLinha = true; // Para controlar a adição de '\n'
             while ((linha = br.readLine()) != null) {
-                sb.append(linha).append('\n');
+                if (!primeiraLinha) {
+                    sb.append('\n'); // Adiciona '\n' apenas antes da próxima linha, se não for a primeira
+                }
+                sb.append(linha);
+                primeiraLinha = false;
             }
         } catch (IOException e) {
             System.err.println("Erro ao ler o arquivo: " + e.getMessage());
