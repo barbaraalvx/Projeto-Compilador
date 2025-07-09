@@ -8,7 +8,7 @@ public class FileReaderUtil {
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String linha;
             while ((linha = br.readLine()) != null) {
-                sb.append(linha.trim());
+                sb.append(linha).append('\n');
             }
         } catch (IOException e) {
             System.err.println("Erro ao ler o arquivo: " + e.getMessage());
