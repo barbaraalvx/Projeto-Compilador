@@ -20,6 +20,8 @@ public class Main {
             return;
         }
 
+        // A função Tokenize vai receber a string do arquivo e retornar uma lista
+        // com todos os tokens e o EOF ao final
         List<Token> tokens = tokenize(content);
 
         tokens.forEach(System.out::println);
@@ -35,6 +37,8 @@ public class Main {
         while (index < content.length()) {
             char c = content.charAt(index);
 
+            // Se for uma quebra de linha, pula a linha, reseta a coluna pra 0 e aumenta o índice//
+            // Considerei a quebra de linha como um caracter
             if (c == '\n') {
                 row++;
                 column = 0;
@@ -42,19 +46,24 @@ public class Main {
                 continue;
             }
 
+            //Ignora caso seja espaço em branco
             if (Character.isWhitespace(c)) {
                 column++;
                 index++;
                 continue;
             }
 
+            // Instancia uma posição que vai ser inserida com o lexema
             Position currentPos = new Position(index, row, column);
 
+            // Caso seja um caracter sozinho ( ) + - * /, usa a função addSingleChar e aumenta a posição
             if (isSingleCharToken(c)) {
                 tokens.add(addSingleCharToken(c, currentPos));
                 index++;
                 column++;
             } else if (Character.isDigit(c)) {
+                // Enquanto for numero, percorre a string e aumenta os indices e colunas
+                // Adicionando o valor no StringBuilder q vai ser adicionado no lexema
                 int startIndex = index;
                 int startColumn = column;
                 StringBuilder number = new StringBuilder();
@@ -68,6 +77,7 @@ public class Main {
                 Position numberPos = new Position(startIndex, row, startColumn);
                 tokens.add(new Token(TypeEnum.DIGITO, number.toString(), numberPos));
             } else {
+                // Esse else considera qualquer caracter que nao seja singleCharToken e nao seja numero
                 System.err.println("Erro Léxico: Caractere inesperado '" + c + "' na posição " + currentPos);
                 index++;
                 column++;
@@ -85,14 +95,16 @@ public class Main {
         };
     }
 
+    // Quando o lexema for apenas um operador, adiciona o token na lista passando só a posição
+    // E o tipo do enum, tem um construtor da classe Token para esse caso
     private static Token addSingleCharToken(char c, Position pos) {
         return switch (c) {
-            case '(' -> new Token(TypeEnum.ABRE_PARENTESES, Character.toString(c), pos);
-            case ')' -> new Token(TypeEnum.FECHA_PARENTESES, Character.toString(c), pos);
-            case '+' -> new Token(TypeEnum.SOMA, Character.toString(c), pos);
-            case '-' -> new Token(TypeEnum.SUBTRACAO, Character.toString(c), pos);
-            case '*' -> new Token(TypeEnum.MULTIPLICACAO, Character.toString(c), pos);
-            case '/' -> new Token(TypeEnum.DIVISAO, Character.toString(c), pos);
+            case '(' -> new Token(TypeEnum.ABRE_PARENTESES, pos);
+            case ')' -> new Token(TypeEnum.FECHA_PARENTESES, pos);
+            case '+' -> new Token(TypeEnum.SOMA, pos);
+            case '-' -> new Token(TypeEnum.SUBTRACAO, pos);
+            case '*' -> new Token(TypeEnum.MULTIPLICACAO, pos);
+            case '/' -> new Token(TypeEnum.DIVISAO, pos);
             default -> throw new IllegalArgumentException("Token inesperado: " + c);
         };
     }
