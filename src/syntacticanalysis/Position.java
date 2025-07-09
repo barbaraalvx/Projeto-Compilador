@@ -7,7 +7,7 @@ public class Position {
 
     @Override
     public String toString() {
-        return "Position{" +
+        return "{" +
                 "index=" + index +
                 ", row=" + row +
                 ", column=" + column +
