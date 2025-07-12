@@ -9,12 +9,6 @@ public class FileReaderUtil {
             String linha;
             boolean primeiraLinha = true; // Para controlar a adição de '\n'
             while ((linha = br.readLine()) != null) {
-                // Verifica se existe um trecho comentado na linha
-//                if(linha.contains("#")){
-//                    int openComment = linha.indexOf("#");
-//                    int  closeComment = linha.indexOf("#", openComment + 1);
-//                    linha = linha.substring(0, openComment)+linha.substring(closeComment+1);
-//                }
                 if (!primeiraLinha) {
                     sb.append('\n'); // Adiciona '\n' apenas antes da próxima linha, se não for a primeira
                 }
