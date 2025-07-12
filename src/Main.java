@@ -31,11 +31,34 @@ public class Main {
         int row = 0;
         int column = 0;
         int index = 0;
+        boolean startComment = false;
+        boolean endComment = false;
+        boolean isComment = false;
 
         List<Token> tokens = new ArrayList<>();
 
         while (index < content.length()) {
             char c = content.charAt(index);
+
+            //reseta as flags de comentario quando um comentario é finalizado
+            if(startComment && endComment) {
+                isComment = false;
+                startComment = false;
+                endComment = false;
+            }
+
+            // se o caracter atual for um # ele sinaliza o inicio ou fim de uma sessão de comentário
+            if( c == '#'){
+                isComment = true;
+                if(!startComment){
+                    startComment = true;
+                } else {
+                    endComment = true;
+                }
+                column++;
+                index++;
+                continue;
+            }
 
             // Se for uma quebra de linha, pula a linha, reseta a coluna pra 0 e aumenta o índice//
             // Considerei a quebra de linha como um caracter
@@ -58,7 +81,8 @@ public class Main {
 
             // Caso seja um caracter sozinho ( ) + - * /, usa a função addSingleChar e aumenta a posição
             if (isSingleCharToken(c)) {
-                tokens.add(addSingleCharToken(c, currentPos));
+                //verifica se não é um comentario e só então adiciona ao conjunto de tokens
+                if(!isComment){tokens.add(addSingleCharToken(c, currentPos));};
                 index++;
                 column++;
             } else if (Character.isDigit(c)) {
@@ -75,10 +99,15 @@ public class Main {
                 }
 
                 Position numberPos = new Position(startIndex, row, startColumn);
-                tokens.add(new Token(TypeEnum.DIGITO, number.toString(), numberPos));
+                //verifica se o número não é um comentario e só então adiciona ao conjunto de tokens
+                if(!isComment){
+                    tokens.add(new Token(TypeEnum.DIGITO, number.toString(), numberPos));
+                };
             } else {
-                // Esse else considera qualquer caracter que nao seja singleCharToken e nao seja numero
-                System.err.println("Erro Léxico: Caractere inesperado '" + c + "' na posição " + currentPos);
+                // Esse else considera qualquer caracter que nao seja singleCharToken e nao seja numero, porém desconsidera comentário
+                if(!isComment) {
+                    System.err.println("Erro Léxico: Caractere inesperado '" + c + "' na posição " + currentPos);
+                }
                 index++;
                 column++;
             }

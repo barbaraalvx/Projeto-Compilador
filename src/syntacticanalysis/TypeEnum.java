@@ -1,6 +1,7 @@
 package syntacticanalysis;
 
 public enum TypeEnum {
+    COMENTARIO("#"),
     ABRE_PARENTESES("("),
     FECHA_PARENTESES(")"),
     DIGITO("digito"),
