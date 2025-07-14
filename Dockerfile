@@ -1,13 +1,14 @@
-FROM openjdk:21
+FROM openjdk:21-bullseye
+
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip findutils && \
+    pip3 install cram
 
 WORKDIR /app
 
-COPY src/utils/ src/utils/
-COPY src/Main.java src/Main.java
+COPY . .
 
 RUN mkdir -p build && \
-    javac -d build src/Main.java src/utils/*.java
-
-WORKDIR /app
+    javac -d build src/Main.java src/utils/*.java src/syntacticanalysis/*.java
 
 ENTRYPOINT ["java", "-cp", "build", "Main"]
