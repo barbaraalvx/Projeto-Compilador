@@ -55,7 +55,10 @@ A classe Position representa a posição de um token no texto de entrada, armaze
 
 - O projeto inclui testes automatizados usando a ferramenta ``cram``
 
-### Executar no CMD:
+### Executar no CMD do linux:
+> test.sh
+
+### Executar no CMD do Windows:
 > test.bat
 
 ## Requisitos:
