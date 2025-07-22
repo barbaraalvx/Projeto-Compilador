@@ -1,6 +1,4 @@
-import syntacticanalysis.Position;
-import syntacticanalysis.Token;
-import syntacticanalysis.TypeEnum;
+import syntacticanalysis.*;
 import utils.FileReaderUtil;
 
 import java.util.ArrayList;
@@ -23,8 +21,19 @@ public class Main {
         // A função Tokenize vai receber a string do arquivo e retornar uma lista
         // com todos os tokens e o EOF ao final
         List<Token> tokens = tokenize(content);
-
+        System.out.println("----------------------------------------------------------------------");
+        System.out.println("Análise Léxica");
+        System.out.println("----------------------------------------------------------------------");
         tokens.forEach(System.out::println);
+
+        // O objeto da classe parser vai ser o responsável pela conversão dos tokens em expressões
+        Parser parser = new Parser(tokens);
+        Expression expr = parser.parseExpression();
+        System.out.println("----------------------------------------------------------------------");
+        System.out.println("Análise Sintática");
+        System.out.println("----------------------------------------------------------------------");
+        System.out.println("AST: " + expr);
+        System.out.println("Resultado: " + expr.avaliar());
     }
 
     public static List<Token> tokenize(String content) {
