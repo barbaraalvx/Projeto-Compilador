@@ -1,9 +1,13 @@
 import syntacticanalysis.*;
+import syntacticanalysis.exceptions.SyntaxException;
 import utils.FileReaderUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+
 public class Main {
+
+    private static boolean isFailedLexicalAnalysis = false;
 
     public static void main(String[] args) {
         if (args.length == 0) {
@@ -17,24 +21,38 @@ public class Main {
             System.out.println("The specified file is empty.");
             return;
         }
-
         // A função Tokenize vai receber a string do arquivo e retornar uma lista
         // com todos os tokens e o EOF ao final
-        List<Token> tokens = tokenize(content);
         System.out.println("----------------------------------------------------------------------");
         System.out.println("Análise Léxica");
         System.out.println("----------------------------------------------------------------------");
-        tokens.forEach(System.out::println);
+        List<Token> tokens = tokenize(content);
 
-        // O objeto da classe parser vai ser o responsável pela conversão dos tokens em expressões
-        Parser parser = new Parser(tokens);
-        Expression expr = parser.parseExpression();
-        System.out.println("----------------------------------------------------------------------");
-        System.out.println("Análise Sintática");
-        System.out.println("----------------------------------------------------------------------");
-        System.out.println("AST: " + expr);
-        System.out.println("Resultado: " + expr.avaliar());
+        tokens.forEach(System.out::println);
+        if (isFailedLexicalAnalysis) {
+            System.err.println("Erro na análise léxica. Verifique os tokens acima.");
+            System.out.println("----------------------------------------------------------------------");
+            return;
+        }
+
+        try {
+            System.out.println("----------------------------------------------------------------------");
+            System.out.println("Análise Sintática");
+            System.out.println("----------------------------------------------------------------------");
+            Parser parser = new Parser(tokens);
+            BinaryOperation expr = (BinaryOperation) parser.parseExpression();
+            System.out.println("AST:");
+            expr.printTree();
+            System.out.println("Expressão: " + expr);
+            System.out.println("Resultado: " + expr.avaliar());
+        } catch (SyntaxException e) {
+            System.err.println("Erro na análise sintática:");
+            System.err.println(e.getMessage());
+        }
+
+
     }
+
 
     public static List<Token> tokenize(String content) {
         int row = 0;
@@ -50,16 +68,16 @@ public class Main {
             char c = content.charAt(index);
 
             //reseta as flags de comentario quando um comentario é finalizado
-            if(startComment && endComment) {
+            if (startComment && endComment) {
                 isComment = false;
                 startComment = false;
                 endComment = false;
             }
 
             // se o caracter atual for um # ele sinaliza o inicio ou fim de uma sessão de comentário
-            if( c == '#'){
+            if (c == '#') {
                 isComment = true;
-                if(!startComment){
+                if (!startComment) {
                     startComment = true;
                 } else {
                     endComment = true;
@@ -91,7 +109,9 @@ public class Main {
             // Caso seja um caracter sozinho ( ) + - * /, usa a função addSingleChar e aumenta a posição
             if (isSingleCharToken(c)) {
                 //verifica se não é um comentario e só então adiciona ao conjunto de tokens
-                if(!isComment){tokens.add(addSingleCharToken(c, currentPos));}
+                if (!isComment) {
+                    tokens.add(addSingleCharToken(c, currentPos));
+                }
                 index++;
                 column++;
             } else if (Character.isDigit(c)) {
@@ -109,13 +129,14 @@ public class Main {
 
                 Position numberPos = new Position(startIndex, row, startColumn);
                 //verifica se o número não é um comentario e só então adiciona ao conjunto de tokens
-                if(!isComment){
+                if (!isComment) {
                     tokens.add(new Token(TypeEnum.DIGITO, number.toString(), numberPos));
                 }
             } else {
                 // Esse else considera qualquer caracter que nao seja singleCharToken e nao seja numero, porém desconsidera comentário
-                if(!isComment) {
+                if (!isComment) {
                     System.err.println("Erro Léxico: Caractere inesperado '" + c + "' na posição " + currentPos);
+                    isFailedLexicalAnalysis = true;
                 }
                 index++;
                 column++;
