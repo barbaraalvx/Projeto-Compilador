@@ -24,22 +24,22 @@ public class Parser {
     }
 
     //faz a verificação do tipo de token esperado
-    private void expect(TypeEnum expected) {
+    private void expect() {
         Token t = nextToken();
-        if (Objects.requireNonNull(t).getType() != expected) {
+        if (Objects.requireNonNull(t).getType() != TypeEnum.FECHA_PARENTESES) {
             throw new RuntimeException(
-                    String.format("Erro sintático em %s: esperado %s, mas veio %s", t.getPosition(), expected, t.getType())
+                    String.format("Erro sintático em %s: esperado %s, mas veio %s", t.getPosition(), TypeEnum.FECHA_PARENTESES, t.getType())
             );
         }
     }
 
-    private TypeOperator parseOperator() {
+    private TypeEnum parseOperator() {
         Token tok = nextToken();
         return switch (Objects.requireNonNull(tok).getType()) {
-            case SOMA -> TypeOperator.SOMA;
-            case SUBTRACAO -> TypeOperator.SUBTRACAO;
-            case MULTIPLICACAO -> TypeOperator.MULTIPLICACAO;
-            case DIVISAO -> TypeOperator.DIVISAO;
+            case SOMA -> TypeEnum.SOMA;
+            case SUBTRACAO -> TypeEnum.SUBTRACAO;
+            case MULTIPLICACAO -> TypeEnum.MULTIPLICACAO;
+            case DIVISAO -> TypeEnum.DIVISAO;
             default -> throw new RuntimeException(
                     String.format("Erro sintático em %s: operador esperado, mas veio '%s'", tok.getPosition(), tok.getLexeme())
             );
@@ -58,9 +58,9 @@ public class Parser {
             case ABRE_PARENTESES:
                 nextToken(); // consome '('
                 Expression left = parseExpression();
-                TypeOperator operator = parseOperator();
+                TypeEnum operator = parseOperator();
                 Expression right = parseExpression();
-                expect(TypeEnum.FECHA_PARENTESES);
+                expect();
                 return new BinaryOperation(operator, left, right);
 
             default:

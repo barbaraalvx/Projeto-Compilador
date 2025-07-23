@@ -91,7 +91,7 @@ public class Main {
             // Caso seja um caracter sozinho ( ) + - * /, usa a função addSingleChar e aumenta a posição
             if (isSingleCharToken(c)) {
                 //verifica se não é um comentario e só então adiciona ao conjunto de tokens
-                if(!isComment){tokens.add(addSingleCharToken(c, currentPos));};
+                if(!isComment){tokens.add(addSingleCharToken(c, currentPos));}
                 index++;
                 column++;
             } else if (Character.isDigit(c)) {
@@ -111,7 +111,7 @@ public class Main {
                 //verifica se o número não é um comentario e só então adiciona ao conjunto de tokens
                 if(!isComment){
                     tokens.add(new Token(TypeEnum.DIGITO, number.toString(), numberPos));
-                };
+                }
             } else {
                 // Esse else considera qualquer caracter que nao seja singleCharToken e nao seja numero, porém desconsidera comentário
                 if(!isComment) {

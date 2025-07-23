@@ -1,9 +1,9 @@
 package syntacticanalysis;
 
 public class Position {
-    private Long index;
-    private Long row;
-    private Long column;
+    private final Long index;
+    private final Long row;
+    private final Long column;
 
     @Override
     public String toString() {

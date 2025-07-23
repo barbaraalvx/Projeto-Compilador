@@ -1,11 +1,11 @@
 package syntacticanalysis;
 
 public class BinaryOperation extends Expression {
-    private TypeOperator operator;
-    private Expression leftExpression;
-    private Expression rightExpression;
+    private final TypeEnum operator;
+    private final Expression leftExpression;
+    private final Expression rightExpression;
 
-    public BinaryOperation(TypeOperator operator, Expression leftExpression, Expression rightExpression) {
+    public BinaryOperation(TypeEnum operator, Expression leftExpression, Expression rightExpression) {
         this.operator = operator;
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;
@@ -35,7 +35,7 @@ public class BinaryOperation extends Expression {
             }
         }
 
-    };
+    }
 
     @Override
     public String toString() {
