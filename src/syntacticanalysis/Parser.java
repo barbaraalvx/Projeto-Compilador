@@ -1,5 +1,7 @@
 package syntacticanalysis;
 
+import syntacticanalysis.exceptions.SyntaxException;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -24,11 +26,13 @@ public class Parser {
     }
 
     //faz a verificação do tipo de token esperado
-    private void expect() {
-        Token t = nextToken();
-        if (Objects.requireNonNull(t).getType() != TypeEnum.FECHA_PARENTESES) {
-            throw new RuntimeException(
-                    String.format("Erro sintático em %s: esperado %s, mas veio %s", t.getPosition(), TypeEnum.FECHA_PARENTESES, t.getType())
+    private void expect() throws SyntaxException {
+        Token token = nextToken();
+        if (token == null || token.getType() != TypeEnum.FECHA_PARENTESES) {
+            throw new SyntaxException(
+                    token != null ? token.getPosition() : new Position(-1, -1, -1),
+                    TypeEnum.FECHA_PARENTESES,
+                    (token != null) ? token.getType() : null
             );
         }
     }

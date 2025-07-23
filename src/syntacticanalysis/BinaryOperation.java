@@ -39,6 +39,28 @@ public class BinaryOperation extends Expression {
 
     @Override
     public String toString() {
-        return "(" + leftExpression + " " + operator + " " + rightExpression + ")";
+        return "(" + leftExpression + " " + operator.getValor() + " " + rightExpression + ")";
+    }
+
+    public void printTree() {
+        printTree("", true);
+    }
+
+    private void printTree(String prefix, boolean isLast) {
+        System.out.println(prefix + (isLast ? "└── " : "├── ") + operator.getValor());
+
+        String newPrefix = prefix + (isLast ? "    " : "│   ");
+
+        if (leftExpression instanceof BinaryOperation leftBinOp) {
+            leftBinOp.printTree(newPrefix, false);
+        } else {
+            System.out.println(newPrefix + "├── " + leftExpression);
+        }
+
+        if (rightExpression instanceof BinaryOperation rightBinOp) {
+            rightBinOp.printTree(newPrefix, true);
+        } else {
+            System.out.println(newPrefix + "└── " + rightExpression);
+        }
     }
 }
