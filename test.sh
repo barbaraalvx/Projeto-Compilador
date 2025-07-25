@@ -1,17 +1,46 @@
 #!/bin/bash
-set -e
 
-TEST_FOLDER="src/tests"
-TEST_FILES="test_soma.t test_simples.t test_aninhado.t test_comentarios.t test_espbrancos.t test_errolexico.t test_misturado.t"
+INPUT_DIR="src/inputs"
+IMAGE_NAME="compilador-java"
 
-echo "Iniciando execução dos testes com Cram..."
-echo "-------------------------------------------"
+# Caminho do host compatível com Docker no Windows
+HOST_INPUT_DIR="$(cd $INPUT_DIR && pwd -W)"
 
-for F in $TEST_FILES; do
+echo "Construindo imagem Docker..."
+docker build -t $IMAGE_NAME .
+
+echo
+echo "Rodando testes:"
+echo "-----------------------------------"
+
+FAILED=()
+
+for file in "$INPUT_DIR"/*.txt; do
+    name=$(basename "$file" .txt)
     echo
-    echo "Rodando teste: $F"
-    docker run --rm -v "$(pwd)/$TEST_FOLDER:/app/tests" --entrypoint cram compilador-cram tests/$F
+    echo
+    echo
+    echo "Teste: $name"
+    echo "-----------------------------------"
+    
+    if docker run --rm -v "$HOST_INPUT_DIR:/app/inputs" $IMAGE_NAME "inputs/$name.txt"; then
+        echo "✅ Teste '$name' passou"
+    else
+        echo "❌ Teste '$name' falhou"
+        FAILED+=("$name")
+    fi
+
+    echo "-----------------------------------"
 done
 
 echo
-echo "Todos os testes foram executados."
+echo "===================="
+if [ ${#FAILED[@]} -eq 0 ]; then
+    echo "Todos os testes passaram!"
+else
+    echo "❌ ${#FAILED[@]} teste(s) falharam:"
+    for name in "${FAILED[@]}"; do
+        echo "   - $name"
+    done
+fi
+echo "===================="

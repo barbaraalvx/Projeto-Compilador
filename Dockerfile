@@ -8,7 +8,8 @@ WORKDIR /app
 
 COPY . .
 
-RUN mkdir -p build && \
-    javac -d build src/Main.java src/utils/*.java src/syntacticanalysis/*.java
+RUN find src -name "*.java" > sources.txt && \
+    javac -d build @sources.txt && \
+    rm sources.txt
 
 ENTRYPOINT ["java", "-cp", "build", "Main"]

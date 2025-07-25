@@ -1,4 +1,4 @@
-# Compiladores – Atividade 04 – Análise Léxica (EC1)
+# Compiladores – Atividade 05 – Análise Sintática
 
 ### Alunos:
 - Bárbara Geovanna Alves Cavalcante - 20220055021
@@ -9,59 +9,53 @@
 
 ## Descrição:
 
-Este projeto é um analisador léxico para a linguagem **EC1 (Expressões Constantes 1)**, desenvolvida na disciplina de Construção de Compiladores I.
+Este projeto implementa um analisador léxico e sintático para a linguagem **EC1 (Expressões Constantes 1)**, desenvolvido na disciplina de Construção de Compiladores I.
 
 A linguagem EC1 aceita expressões aritméticas compostas por:
 - Números inteiros
 - Operadores `+`, `-`, `*`, `/`
 - Parênteses obrigatórios para estrutura
+- Comentários delimitados com `#comentários#` (ignorados na análise)
 
 O analisador léxico:
 - Lê um arquivo .txt com a expressão
-- Remove comentários (delimitados com #)
-- Gera uma sequência de tokens com tipo, lexema e posição
-- Reporta erros léxicos (caracteres inválidos)
-
-## Classes da versão:
-
-Na versão inicial, o compilador da linguagem CI possui as seguintes classes de utilidade:
-
-### FileReaderUtil
-
-A classe FileReaderUtil é responsável pela leitura do arquivo .TXT (entre as opções presentes em inputs) passado como argumento na função principal.
-
-### Token.java
-
-A classe Token define um token léxico da linguagem EC1, que é composto por um tipo, um lexema e uma posição. Armazena os resultados da análise léxica.
-
-### TypeEnum.java
-
-A classe TypeEnum corresponde à enumeração que define todos os tipos possíveis de token reconhecidos pela linguagem EC1.
-
-### Position.java
-
-A classe Position representa a posição de um token no texto de entrada, armazenando o índice absoluto, a linha e a coluna. 
+- Faz a análise léxica: identifica tokens válidos e erros léxicos
+- Faz a análise sintática: constrói uma árvore de derivação (AST)
+- Imprime a árvore sintática
+- Avalia o resultado da expressão final
 
 ## Como executar com Docker:
 
 ### 1. Build da imagem
-> docker build --no-cache -t compilador-cram .
+``` bash
+docker build -t compilador-java .
+```
 
-### 2. Executar compilação dos arquivos manualmente
-> docker run --rm -v "%cd%\src\inputs:/app/inputs" compilador-cram inputs/aninhado.txt
+### 2. Executar um teste com arquivo .txt
+```bash
+docker run --rm -v "$(pwd -W)/src/inputs:/app/inputs" compilador-java inputs/aninhado.txt
+```
 
 
-## Rodar todos os testes com ``cram``:
+## Rodar todos os testes automaticamente:
 
-- O projeto inclui testes automatizados usando a ferramenta ``cram``
+- O projeto inclui um script que executa todos os arquivos .txt da pasta src/inputs dentro do contêiner.
 
-### Executar no CMD do linux:
-> test.sh
+### Executar no Linux/Git Bash/WSL:
+```bash 
+./test.sh
+```
 
-### Executar no CMD do Windows:
-> test.bat
+#### O script:
+- Compila a imagem Docker
+- Executa todos os testes .txt
+- Verifica se houve falhas
+- Exibe um resumo dos testes ao final
 
 ## Requisitos:
 
 - Docker Desktop instalado e rodando
-- Cram incluído no contêiner
+- Terminal compatível com Bash
+
+## Observações finais
+Os testes não dependem mais do cram, por causa da incompatibilidade com codificações de arquivo diferentes de ASCII puro. A execução via Docker é mais confiável e portável.

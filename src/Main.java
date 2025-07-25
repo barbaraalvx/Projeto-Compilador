@@ -1,9 +1,8 @@
+import java.util.ArrayList;
+import java.util.List;
 import syntacticanalysis.*;
 import syntacticanalysis.exceptions.SyntaxException;
 import utils.FileReaderUtil;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Main {
 
@@ -32,6 +31,7 @@ public class Main {
         if (isFailedLexicalAnalysis) {
             System.err.println("Erro na análise léxica. Verifique os tokens acima.");
             System.out.println("----------------------------------------------------------------------");
+            System.exit(1);
             return;
         }
 
@@ -48,6 +48,7 @@ public class Main {
         } catch (SyntaxException e) {
             System.err.println("Erro na análise sintática:");
             System.err.println(e.getMessage());
+            System.exit(1);
         }
 
 
