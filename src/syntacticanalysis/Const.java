@@ -12,7 +12,13 @@ public class Const extends Expression {
     public int avaliar() {
         return value;
     }
+
+    @Override
     public String toString() {
         return String.valueOf(value);
+    }
+    
+    public int getValor() {
+        return value;
     }
 }

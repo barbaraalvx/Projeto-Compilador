@@ -1,8 +1,11 @@
+import codegen.CodeGenerator;
 import java.util.ArrayList;
 import java.util.List;
 import syntacticanalysis.*;
 import syntacticanalysis.exceptions.SyntaxException;
 import utils.FileReaderUtil;
+import utils.FileWriterUtil;
+
 
 public class Main {
 
@@ -45,6 +48,13 @@ public class Main {
             expr.printTree();
             System.out.println("Expressão: " + expr);
             System.out.println("Resultado: " + expr.avaliar());
+            CodeGenerator generator = new CodeGenerator();
+            String assemblyCode = generator.generate(expr);
+            String inputName = args[0].substring(args[0].lastIndexOf('/') + 1); // ou "\\" no Windows
+            String baseName = inputName.replace(".txt", "");
+            String outputFile = "src/assembly/saida_" + baseName + ".s";
+
+            FileWriterUtil.writeToFile(assemblyCode, outputFile);
         } catch (SyntaxException e) {
             System.err.println("Erro na análise sintática:");
             System.err.println(e.getMessage());

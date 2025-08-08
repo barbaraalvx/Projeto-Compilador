@@ -37,6 +37,19 @@ public class BinaryOperation extends Expression {
 
     }
 
+    public TypeEnum getOperator() {
+        return operator;
+    }
+
+    public Expression getLeft() {
+        return leftExpression;
+    }
+
+    public Expression getRight() {
+        return rightExpression;
+    }
+
+
     @Override
     public String toString() {
         return "(" + leftExpression + " " + operator.getValor() + " " + rightExpression + ")";
