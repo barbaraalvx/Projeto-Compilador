@@ -50,11 +50,8 @@ public class CodeGenerator {
                     builder.append("    imul %rbx, %rax\n");
                     break;
                 case "/":
-                    builder.append("    xor %rdx, %rdx\n"); // limpa rdx
-                    builder.append("    mov %rax, %rcx\n"); // salva numerador
-                    builder.append("    mov %rbx, %rax\n"); // denominador
-                    builder.append("    mov %rcx, %rbx\n"); // numerador em rbx
-                    builder.append("    div %rbx\n");       // rax := rcx / rbx
+                    builder.append("    xor %rdx, %rdx\n");
+                    builder.append("    div %rbx\n");
                     break;
                 default:
                     throw new RuntimeException("Operador inválido: " + op);
