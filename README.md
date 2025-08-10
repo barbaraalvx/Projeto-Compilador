@@ -49,16 +49,16 @@ src/
 docker build -t compilador-java .
 ```
 
-### 1.2. Executar um teste com arquivo .txt
+#### 1.2. Executar um teste com arquivo .txt
 ```bash
 docker run --rm -v "$(pwd -W)/src/inputs:/app/inputs" compilador-java inputs/{exemplo}.txt
 ```
 
-## 2. Rodar todos os testes automaticamente:
+### 2. Rodar todos os testes automaticamente:
 
 - O projeto inclui um script que executa todos os arquivos .txt da pasta src/inputs dentro do contêiner.
 
-### Executar no Linux/Git Bash/WSL:
+#### Executar no Linux/Git Bash/WSL:
 ```bash 
 ./test.sh
 ```
@@ -69,11 +69,11 @@ docker run --rm -v "$(pwd -W)/src/inputs:/app/inputs" compilador-java inputs/{ex
 - Monta, linka e executa cada .s gerado
 - Exibe um resumo dos testes ao final (resultado e status)
 
-## 3. Executar um `.s` específico
+### 3. Executar um `.s` específico
 
 - O projeto também inclui um script que executa um arquivo .txt da pasta src/inputs.
 
-### Executar no Linux/Git Bash/WSL:
+#### Executar no Linux/Git Bash/WSL:
 ```bash 
 ./run.sh saida_{exemplo}.s
 ```
@@ -83,7 +83,7 @@ docker run --rm -v "$(pwd -W)/src/inputs:/app/inputs" compilador-java inputs/{ex
 - Monta (as) e linka (ld) com runtime.o
 - Executa o binário
 
-## 4. Execução Java pura (sem Docker)
+### 4. Execução Java pura (sem Docker)
 
 - Na raiz do projeto:
 ```bash 
