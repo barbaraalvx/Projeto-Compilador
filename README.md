@@ -1,4 +1,4 @@
-# Compiladores – Atividade 05 – Análise Sintática
+# Compiladores – Atividade 06 – Geração de Código Assembly
 
 ### Alunos:
 - Bárbara Geovanna Alves Cavalcante - 20220055021
@@ -9,7 +9,7 @@
 
 ## Descrição:
 
-Este projeto implementa um analisador léxico e sintático para a linguagem **EC1 (Expressões Constantes 1)**, desenvolvido na disciplina de Construção de Compiladores I.
+Este projeto implementa um compilador completo para a linguagem **EC1 (Expressões Constantes 1)**, desenvolvido na disciplina de Construção de Compiladores I.
 
 A linguagem EC1 aceita expressões aritméticas compostas por:
 - Números inteiros
@@ -17,27 +17,44 @@ A linguagem EC1 aceita expressões aritméticas compostas por:
 - Parênteses obrigatórios para estrutura
 - Comentários delimitados com `#comentários#` (ignorados na análise)
 
-O analisador léxico:
-- Lê um arquivo .txt com a expressão
-- Faz a análise léxica: identifica tokens válidos e erros léxicos
-- Faz a análise sintática: constrói uma árvore de derivação (AST)
-- Imprime a árvore sintática
-- Avalia o resultado da expressão final
+O compilador é dividido em 3 etapas:
+1. Análise léxica: identifica tokens válidos e erros léxicos.
+2. Análise sintática: constrói uma Árvore Sintática Abstrata (AST).
+3. Geração de código: produz código Assembly x86-64 em sintaxe AT&T, que:
+    - Coloca o resultado no registrador `%rax`
+    - Chama funções `imprime_num` e `sair`(implementadas em `runtime.s`)
 
-## Como executar com Docker:
 
-### 1. Build da imagem
+O projeto também inclui execução completa do Assembly:
+- Montagem (as)
+- Linkagem (ld)
+- Execução do binário final
+
+## Estrutura de pastas
+
+```bash
+src/
+├── assembly/       # Arquivos .s gerados + runtime.s/.o
+├── codegen/        # Gerador de códigos Assembly
+├── inputs/         # Arquivos .txt de teste
+├── syntacticanalysis/ # Lexer, Parser, AST, etc.
+├── utils/          # Leitura e escrita de arquivos
+└── Main.java       # Entrada principal do compilador
+```
+## Como executar:
+
+### 1. Compilação e execução via Docker
+#### 1.1 Construir a imagem
 ``` bash
 docker build -t compilador-java .
 ```
 
-### 2. Executar um teste com arquivo .txt
+### 1.2. Executar um teste com arquivo .txt
 ```bash
-docker run --rm -v "$(pwd -W)/src/inputs:/app/inputs" compilador-java inputs/aninhado.txt
+docker run --rm -v "$(pwd -W)/src/inputs:/app/inputs" compilador-java inputs/{exemplo}.txt
 ```
 
-
-## Rodar todos os testes automaticamente:
+## 2. Rodar todos os testes automaticamente:
 
 - O projeto inclui um script que executa todos os arquivos .txt da pasta src/inputs dentro do contêiner.
 
@@ -47,15 +64,50 @@ docker run --rm -v "$(pwd -W)/src/inputs:/app/inputs" compilador-java inputs/ani
 ```
 
 #### O script:
-- Compila a imagem Docker
+- Constrói a imagem Docker
 - Executa todos os testes .txt
-- Verifica se houve falhas
-- Exibe um resumo dos testes ao final
+- Monta, linka e executa cada .s gerado
+- Exibe um resumo dos testes ao final (resultado e status)
+
+## 3. Executar um `.s` específico
+
+- O projeto também inclui um script que executa um arquivo .txt da pasta src/inputs.
+
+### Executar no Linux/Git Bash/WSL:
+```bash 
+./run.sh saida_{exemplo}.s
+```
+
+#### O script:
+- Recebe o nome de um .s que já está em src/assembly
+- Monta (as) e linka (ld) com runtime.o
+- Executa o binário
+
+## 4. Execução Java pura (sem Docker)
+
+- Na raiz do projeto:
+```bash 
+javac -d out $(find src -name "*.java")
+java -cp out Main src/inputs/{exemplo}.txt
+```
+- Depois, para montar e rodar o .s gerado:
+```bash 
+cd src/assembly
+as saida_{exemplo}.s -o saida_{exemplo}.o
+as runtime.s -o runtime.o
+ld saida_{exemplo}.o runtime.o -o exec_{exemplo}
+./exec_{exemplo}
+```
 
 ## Requisitos:
 
 - Docker Desktop instalado e rodando
-- Terminal compatível com Bash
+- Terminal compatível com Bash e binutils (as/ld)
+- No caso de execução pura em Java, JDK 17+
 
 ## Observações finais
-Os testes não dependem mais do cram, por causa da incompatibilidade com codificações de arquivo diferentes de ASCII puro. A execução via Docker é mais confiável e portável.
+- O pipeline via Docker é mais portável e evita problemas de ambiente.
+- O test.sh faz teste completo de geração + execução de código Assembly.
+- O run.sh é útil para depurar ou testar .s específico sem rodar todos os casos.
+- Testes só usaram Cram na atividade 4, mas o método foi abandonado por incompatibilidade com codificações diferentes de ASCII puro na AST.
+    - A partir da entrega 5, a validação passou a ser feita com scripts Bash que automatizam o pipeline. `test.sh` aplica o fluxo de execução a todos os casos de teste (src/inputs/*.txt) e marca como falhos os casos em que o `compilador retorna um erro`, o `.s não é gerado` ou a `montagem/linkagem falha`.
