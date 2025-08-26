@@ -43,7 +43,7 @@ public class Main {
             System.out.println("Análise Sintática");
             System.out.println("----------------------------------------------------------------------");
             Parser parser = new Parser(tokens);
-            BinaryOperation expr = (BinaryOperation) parser.parseExpression();
+            BinaryOperation expr = (BinaryOperation) parser.parse();
             System.out.println("AST:");
             expr.printTree();
             System.out.println("Expressão: " + expr);

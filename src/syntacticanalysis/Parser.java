@@ -4,7 +4,6 @@ import syntacticanalysis.exceptions.SyntaxException;
 
 import java.util.List;
 import java.util.Objects;
-
 public class Parser {
 
     private final List<Token> tokens;
@@ -15,62 +14,112 @@ public class Parser {
         this.position = 0;
     }
 
-    //olha o proximo sem consumir
+    // ===== utilitários de leitura =====
+    // olha o próximo sem consumir
     private Token lookNextToken() {
         return position < tokens.size() ? tokens.get(position) : null;
     }
 
-    //consome o proximo token
+    // consome o próximo token
     private Token nextToken() {
         return position < tokens.size() ? tokens.get(position++) : null;
     }
 
-    //faz a verificação do tipo de token esperado
-    private void expect() throws SyntaxException {
+    // true se próximo token é do tipo t (não consome)
+    private boolean peek(TypeEnum t) {
+        Token tok = lookNextToken();
+        return tok != null && tok.getType() == t;
+    }
+
+    // consome e garante tipo esperado
+    private Token expect(TypeEnum expected) throws SyntaxException {
         Token token = nextToken();
-        if (token == null || token.getType() != TypeEnum.FECHA_PARENTESES) {
+        if (token == null || token.getType() != expected) {
             throw new SyntaxException(
                     token != null ? token.getPosition() : new Position(-1, -1, -1),
-                    TypeEnum.FECHA_PARENTESES,
-                    (token != null) ? token.getType() : null
+                    expected,
+                    token != null ? token.getType() : null
             );
         }
+        return token;
     }
 
-    private TypeEnum parseOperator() {
-        Token tok = nextToken();
-        return switch (Objects.requireNonNull(tok).getType()) {
-            case SOMA -> TypeEnum.SOMA;
-            case SUBTRACAO -> TypeEnum.SUBTRACAO;
-            case MULTIPLICACAO -> TypeEnum.MULTIPLICACAO;
-            case DIVISAO -> TypeEnum.DIVISAO;
-            default -> throw new RuntimeException(
-                    String.format("Erro sintático em %s: operador esperado, mas veio '%s'", tok.getPosition(), tok.getLexeme())
-            );
-        };
+    // compat: sua expect antiga (fecha parênteses)
+    private void expect() throws SyntaxException {
+        expect(TypeEnum.FECHA_PARENTESES);
     }
 
-    public Expression parseExpression() {
+    // ===== entrada principal =====
+    // use este como ponto de entrada do parser
+    public Expression parse() {
+        Expression ast = parseExpA();           // nível aditivo
+        // se quiser exigir consumo total até EOF:
         Token tok = lookNextToken();
+        if (tok != null && tok.getType() != TypeEnum.EOF) {
+            throw new RuntimeException(String.format(
+                    "Erro sintático em %s: tokens restantes a partir de '%s'",
+                    tok.getPosition(), tok.getLexeme()
+            ));
+        }
+        return ast;
+    }
 
-        switch (Objects.requireNonNull(tok).getType()) {
-            case DIGITO:
-                nextToken();
+    // ===== EC2 =====
+    // <exp_a> ::= <exp_m> ((+|-) <exp_m>)*
+    private Expression parseExpA() {
+        Expression left = parseExpM();
+        while (peek(TypeEnum.SOMA) || peek(TypeEnum.SUBTRACAO)) {
+            Token opTok = nextToken();          // consome + ou -
+            Expression right = parseExpM();     // lê próximo termo
+            TypeEnum op = (opTok.getType() == TypeEnum.SOMA)
+                    ? TypeEnum.SOMA : TypeEnum.SUBTRACAO;
+            left = new BinaryOperation(op, left, right); // associativo à esquerda
+        }
+        return left;
+    }
+
+    // <exp_m> ::= <prim> ((*|/) <prim>)*
+    private Expression parseExpM() {
+        Expression left = parsePrim();
+        while (peek(TypeEnum.MULTIPLICACAO) || peek(TypeEnum.DIVISAO)) {
+            Token opTok = nextToken();          // consome * ou /
+            Expression right = parsePrim();
+            TypeEnum op = (opTok.getType() == TypeEnum.MULTIPLICACAO)
+                    ? TypeEnum.MULTIPLICACAO : TypeEnum.DIVISAO;
+            left = new BinaryOperation(op, left, right); // associativo à esquerda
+        }
+        return left;
+    }
+
+    // <prim> ::= <num> | '(' <exp_a> ')'
+    private Expression parsePrim() {
+        Token tok = lookNextToken();
+        if (tok == null) {
+            throw new RuntimeException("Erro sintático: fim inesperado de entrada");
+        }
+
+        switch (tok.getType()) {
+            case DIGITO -> {
+                nextToken(); // consome número
                 int value = Integer.parseInt(tok.getLexeme());
                 return new Const(value);
-
-            case ABRE_PARENTESES:
-                nextToken(); // consome '('
-                Expression left = parseExpression();
-                TypeEnum operator = parseOperator();
-                Expression right = parseExpression();
-                expect();
-                return new BinaryOperation(operator, left, right);
-
-            default:
-                throw new RuntimeException(
-                        String.format("Erro sintático em %s: token inesperado '%s'", tok.getPosition(), tok.getLexeme())
-                );
+            }
+            case ABRE_PARENTESES -> {
+                nextToken();             // consome '('
+                Expression inner = parseExpA();
+                try {
+                    expect(TypeEnum.FECHA_PARENTESES);
+                } catch (SyntaxException e) {
+                    throw new RuntimeException(e);
+                }
+                return inner;
+            }
+            default -> {
+                throw new RuntimeException(String.format(
+                        "Erro sintático em %s: esperado número ou '(', mas veio '%s'",
+                        tok.getPosition(), tok.getLexeme()
+                ));
+            }
         }
     }
 }
