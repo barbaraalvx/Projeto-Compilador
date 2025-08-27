@@ -44,16 +44,13 @@ public class Parser {
         return token;
     }
 
-    // compat: sua expect antiga (fecha parênteses)
     private void expect() throws SyntaxException {
         expect(TypeEnum.FECHA_PARENTESES);
     }
 
     // ===== entrada principal =====
-    // use este como ponto de entrada do parser
     public Expression parse() {
-        Expression ast = parseExpA();           // nível aditivo
-        // se quiser exigir consumo total até EOF:
+        Expression ast = parseExpA();
         Token tok = lookNextToken();
         if (tok != null && tok.getType() != TypeEnum.EOF) {
             throw new RuntimeException(String.format(
@@ -64,7 +61,6 @@ public class Parser {
         return ast;
     }
 
-    // ===== EC2 =====
     // <exp_a> ::= <exp_m> ((+|-) <exp_m>)*
     private Expression parseExpA() {
         Expression left = parseExpM();
