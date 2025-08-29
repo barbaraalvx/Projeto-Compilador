@@ -1,4 +1,4 @@
-# Compiladores – Atividade 06 – Geração de Código Assembly
+# Compiladores – Atividade 07 – Precedência
 
 ### Alunos:
 - Bárbara Geovanna Alves Cavalcante - 20220055021
@@ -9,17 +9,19 @@
 
 ## Descrição:
 
-Este projeto implementa um compilador completo para a linguagem **EC1 (Expressões Constantes 1)**, desenvolvido na disciplina de Construção de Compiladores I.
+Este projeto implementa um compilador completo para a linguagem **EC2 (Expressões Constantes 2)**, desenvolvido na disciplina de Construção de Compiladores I.
 
-A linguagem EC1 aceita expressões aritméticas compostas por:
+O principal objetivo desta versão é permitir que expressões sejam escritas sem parênteses obrigatórios, aplicando as regras de precedência e associatividade de operadores.
+
+A linguagem EC2 aceita expressões aritméticas compostas por:
 - Números inteiros
 - Operadores `+`, `-`, `*`, `/`
-- Parênteses obrigatórios para estrutura
+- Parênteses opcionais, que são usados para controlar a ordem das operações, conforme a notação matemática.
 - Comentários delimitados com `#comentários#` (ignorados na análise)
 
 O compilador é dividido em 3 etapas:
 1. Análise léxica: identifica tokens válidos e erros léxicos.
-2. Análise sintática: constrói uma Árvore Sintática Abstrata (AST).
+2. Análise sintática: constrói uma Árvore Sintática Abstrata (AST) que reflete as regras de precedência e associatividade.
 3. Geração de código: produz código Assembly x86-64 em sintaxe AT&T, que:
     - Coloca o resultado no registrador `%rax`
     - Chama funções `imprime_num` e `sair`(implementadas em `runtime.s`)
@@ -98,6 +100,16 @@ as runtime.s -o runtime.o
 ld saida_{exemplo}.o runtime.o -o exec_{exemplo}
 ./exec_{exemplo}
 ```
+
+## Testes de precedência e associatividade
+
+Os arquivos de teste abaixo são exemplos de expressões que não utilizam parênteses, a fim de testar a capacidade do compilador de aplicar corretamente as regras de precedência e associatividade.
+
+- faltaparentese.txt: Testa uma expressão com operadores de diferentes precedências e sem parênteses.
+- misturado.txt: Contém uma expressão mais complexa que mistura operadores de soma, subtração, multiplicação e divisão.
+- soma.txt: Testa a associatividade à esquerda de operadores de mesma precedência (+ e -).
+- multiplicacao.txt: Testa a associatividade à esquerda de operadores de mesma precedência (* e /).
+
 
 ## Requisitos:
 
