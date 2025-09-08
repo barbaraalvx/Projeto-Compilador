@@ -125,7 +125,26 @@ public class Main {
                 }
                 index++;
                 column++;
-            } else if (Character.isDigit(c)) {
+            } 
+
+            // Lógica para identificadores
+            else if (Character.isLetter(c)) {
+                int startIndex = index;
+                int startColumn = column;
+                StringBuilder identifier = new StringBuilder();
+
+                while (index < content.length() && (Character.isLetterOrDigit(content.charAt(index)))) {
+                    identifier.append(content.charAt(index));
+                    index++;
+                    column++;
+                }
+
+                Position identifierPos = new Position(startIndex, row, startColumn);
+                tokens.add(new Token(TypeEnum.IDENTIFICADOR, identifier.toString(), identifierPos));
+            }
+
+            // Lógica para números
+            else if (Character.isDigit(c)) {
                 // Enquanto for numero, percorre a string e aumenta os indices e colunas
                 // Adicionando o valor no StringBuilder q vai ser adicionado no lexema
                 int startIndex = index;
@@ -160,7 +179,7 @@ public class Main {
 
     private static boolean isSingleCharToken(char c) {
         return switch (c) {
-            case '(', ')', '+', '-', '*', '/' -> true;
+            case '(', ')', '+', '-', '*', '/', ';', '=' -> true;
             default -> false;
         };
     }
@@ -174,6 +193,8 @@ public class Main {
             case '+' -> new Token(TypeEnum.SOMA, pos);
             case '-' -> new Token(TypeEnum.SUBTRACAO, pos);
             case '*' -> new Token(TypeEnum.MULTIPLICACAO, pos);
+            case ';' -> new Token(TypeEnum.PONTO_VIRGULA, pos);
+            case '=' -> new Token(TypeEnum.IGUAL, pos);
             case '/' -> new Token(TypeEnum.DIVISAO, pos);
             default -> throw new IllegalArgumentException("Token inesperado: " + c);
         };

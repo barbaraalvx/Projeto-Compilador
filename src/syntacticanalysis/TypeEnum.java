@@ -8,6 +8,9 @@ public enum TypeEnum {
     SUBTRACAO("-"),
     MULTIPLICACAO("*"),
     DIVISAO("/"),
+    PONTO_VIRGULA(";"),
+    IGUAL("="),
+    IDENTIFICADOR("identificador"),
     EOF("endOfFile");
 
     private final String label;
