@@ -1,9 +1,8 @@
 package syntacticanalysis;
 
-import syntacticanalysis.exceptions.SyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import syntacticanalysis.exceptions.SyntaxException;
 
 public class Parser {
 
@@ -37,15 +36,15 @@ public class Parser {
         Token token = nextToken();
         if (token == null || token.getType() != expected) {
             throw new SyntaxException(
-                    token != null ? token.getPosition() : new Position(-1, -1, -1),
-                    expected,
-                    token != null ? token.getType() : null
+                token != null ? token.getPosition() : new Position(-1, -1, -1),
+                expected,
+                token != null ? token.getType() : null
             );
         }
         return token;
     }
 
-    // Sobrecarga de expect para mensagens de erro mais detalhadas
+    // Sobrecarga de expect para mensagens de erro mais detalhadas (se quiser usar)
     private Token expect(String expected, TypeEnum... possibleTypes) throws SyntaxException {
         Token token = nextToken();
         boolean matches = false;
@@ -59,9 +58,9 @@ public class Parser {
         }
         if (!matches) {
             throw new SyntaxException(
-                token != null ? token.getPosition() : new Position(-1, -1, -1),
-                expected,
-                token != null ? token.getType() : null
+                    token.getPosition(),
+                    TypeEnum.DIGITO,
+                    token.getType()
             );
         }
         return token;
@@ -72,37 +71,34 @@ public class Parser {
         return parseProgram();
     }
 
-    // Função que analisa o programa completo: <programa> ::= <decl>* <result>
+    // <programa> ::= <decl>* <result>
     private Program parseProgram() throws SyntaxException {
         List<Declaration> declarations = new ArrayList<>();
         Token tok = lookNextToken();
 
-        // Loop para analisar as declarações
+        // declarações enquanto iniciar por IDENTIFICADOR
         while (tok != null && tok.getType() == TypeEnum.IDENTIFICADOR) {
             Declaration dec = parseDeclaration();
             declarations.add(dec);
             tok = lookNextToken();
         }
 
-        // Analisa a expressão final, que deve começar com '='
+        // expressão final deve começar com '='
         expect(TypeEnum.IGUAL);
         Expression finalExpression = parseExpA();
-        
-        // Garante que o arquivo terminou após a expressão final
-        if (lookNextToken().getType() != TypeEnum.EOF) {
-             throw new SyntaxException(lookNextToken().getPosition(), TypeEnum.EOF, lookNextToken().getType());
-        }
+
+        // arquivo deve terminar após a expressão final
+        expect(TypeEnum.EOF);
 
         return new Program(declarations, finalExpression);
     }
-    
-    // Função que analisa uma única declaração: <decl> ::= <ident> '=' <exp>';'
+
+    // <decl> ::= <ident> '=' <exp> ';'
     private Declaration parseDeclaration() throws SyntaxException {
         Token identToken = expect(TypeEnum.IDENTIFICADOR);
         expect(TypeEnum.IGUAL);
         Expression expression = parseExpA();
         expect(TypeEnum.PONTO_VIRGULA);
-
         return new Declaration(identToken.getLexeme(), expression);
     }
 
@@ -113,7 +109,8 @@ public class Parser {
             Token opTok = nextToken();
             Expression right = parseExpM();
             TypeEnum op = (opTok.getType() == TypeEnum.SOMA)
-                    ? TypeEnum.SOMA : TypeEnum.SUBTRACAO;
+                ? TypeEnum.SOMA
+                : TypeEnum.SUBTRACAO;
             left = new BinaryOperation(op, left, right);
         }
         return left;
@@ -126,40 +123,41 @@ public class Parser {
             Token opTok = nextToken();
             Expression right = parsePrim();
             TypeEnum op = (opTok.getType() == TypeEnum.MULTIPLICACAO)
-                    ? TypeEnum.MULTIPLICACAO : TypeEnum.DIVISAO;
+                ? TypeEnum.MULTIPLICACAO
+                : TypeEnum.DIVISAO;
             left = new BinaryOperation(op, left, right);
         }
         return left;
     }
 
-    // <prim> ::= <num> | <ident> | '('<exp>')'
+    // <prim> ::= <num> | <ident> | '(' <exp> ')'
     private Expression parsePrim() throws SyntaxException {
-        Token tok = lookNextToken();
-        if (tok == null) {
+        Token token = lookNextToken();
+        if (token == null) {
             throw new SyntaxException(new Position(-1, -1, -1), null, null);
         }
 
-        switch (tok.getType()) {
+        switch (token.getType()) {
             case DIGITO -> {
-                nextToken(); // consome número
-                int value = Integer.parseInt(tok.getLexeme());
+                nextToken();
+                int value = Integer.parseInt(token.getLexeme());
                 return new Const(value);
             }
             case IDENTIFICADOR -> {
-                nextToken(); // consome o token do identificador
-                return new VariableReference(tok.getLexeme());
+                nextToken();
+                return new VariableReference(token.getLexeme());
             }
             case ABRE_PARENTESES -> {
-                nextToken(); // consome '('
+                nextToken();
                 Expression inner = parseExpA();
                 expect(TypeEnum.FECHA_PARENTESES);
                 return inner;
             }
             default -> {
                 throw new SyntaxException(
-                        tok.getPosition(),
-                        "number, identifier or '('",
-                        tok.getType()
+                        token.getPosition(),
+                        TypeEnum.DIGITO,
+                        token.getType()
                 );
             }
         }

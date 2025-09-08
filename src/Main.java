@@ -43,14 +43,24 @@ public class Main {
             System.out.println("Análise Sintática");
             System.out.println("----------------------------------------------------------------------");
             Parser parser = new Parser(tokens);
-            BinaryOperation expr = (BinaryOperation) parser.parse();
+            Program program = parser.parse();
+            Expression expr = program.getFinalExpression();
             System.out.println("AST:");
-            expr.printTree();
+            if (expr instanceof BinaryOperation binOp) {
+                binOp.printTree();
+            } else {
+                System.out.println("AST (final): " + expr);
+            }
             System.out.println("Expressão: " + expr);
-            System.out.println("Resultado: " + expr.avaliar());
+            try {
+                int resultado = expr.avaliar();
+                System.out.println("Resultado: " + resultado);
+            } catch (UnsupportedOperationException e) {
+                System.out.println("Resultado: não calculado (expressão contém variáveis).");
+            }
             CodeGenerator generator = new CodeGenerator();
             String assemblyCode = generator.generate(expr);
-            String inputName = args[0].substring(args[0].lastIndexOf('/') + 1); // ou "\\" no Windows
+            String inputName = args[0].substring(args[0].lastIndexOf('/') + 1);
             String baseName = inputName.replace(".txt", "");
             String outputFile = "src/assembly/saida_" + baseName + ".s";
 

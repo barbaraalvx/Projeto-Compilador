@@ -17,11 +17,10 @@ public class Declaration {
         return expression;
     }
 
-    // Método para imprimir a declaração na árvore.
     public void printTree(String prefix) {
         System.out.println(prefix + "├── Declaration: " + variableName);
-        if (expression instanceof BinaryOperation) {
-            ((BinaryOperation) expression).printTree(prefix + "│   ", true);
+        if (expression instanceof BinaryOperation bo) {
+            bo.printTree(prefix + "│   ");
         } else {
             System.out.println(prefix + "└── " + expression);
         }

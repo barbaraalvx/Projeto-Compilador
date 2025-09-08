@@ -76,4 +76,8 @@ public class BinaryOperation extends Expression {
             System.out.println(newPrefix + "└── " + rightExpression);
         }
     }
+
+    public void printTree(String prefix) {
+        printTree(prefix, true);
+    }
 }
