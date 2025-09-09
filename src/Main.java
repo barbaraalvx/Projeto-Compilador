@@ -1,6 +1,8 @@
 import codegen.CodeGenerator;
 import java.util.ArrayList;
 import java.util.List;
+import semanticalanalysis.*;
+import semanticalanalysis.exceptions.SemanticException;
 import syntacticanalysis.*;
 import syntacticanalysis.exceptions.SyntaxException;
 import utils.FileReaderUtil;
@@ -45,19 +47,39 @@ public class Main {
             Parser parser = new Parser(tokens);
             Program program = parser.parse();
             Expression expr = program.getFinalExpression();
-            System.out.println("AST:");
+            System.out.println("AST (original):");
             if (expr instanceof BinaryOperation binOp) {
                 binOp.printTree();
             } else {
                 System.out.println("AST (final): " + expr);
             }
-            System.out.println("Expressão: " + expr);
+            System.out.println("Expressão (original): " + expr);
+
+            System.out.println("----------------------------------------------------------------------");
+            System.out.println("Análise Semântica");
+            System.out.println("----------------------------------------------------------------------");
             try {
-                int resultado = expr.avaliar();
-                System.out.println("Resultado: " + resultado);
-            } catch (UnsupportedOperationException e) {
-                System.out.println("Resultado: não calculado (expressão contém variáveis).");
+                semanticalanalysis.SemanticAnalyzer analyzer = new semanticalanalysis.SemanticAnalyzer();
+                analyzer.analyze(program);
+                System.out.println("Análise semântica concluída sem erros.");
+            } catch (SemanticException se) {
+                System.err.println("Erro semântico: " + se.getMessage());
+                System.exit(1);
             }
+
+            SemanticExecutor executor = new semanticalanalysis.SemanticExecutor();
+            SemanticExecutor.ExecResult res = executor.execute(program);
+
+            System.out.println("AST (substituída):");
+            if (res.substitutedFinal instanceof BinaryOperation bin2) {
+                bin2.printTree();
+            } else {
+                System.out.println("AST (final): " + res.substitutedFinal);
+            }
+
+            System.out.println("Expressão (sem variáveis): " + res.substitutedFinal);
+            System.out.println("Ambiente (variáveis): " + res.env);
+            System.out.println("Resultado: " + res.value);
             CodeGenerator generator = new CodeGenerator();
             String assemblyCode = generator.generate(expr);
             String inputName = args[0].substring(args[0].lastIndexOf('/') + 1);
@@ -143,14 +165,16 @@ public class Main {
                 int startColumn = column;
                 StringBuilder identifier = new StringBuilder();
 
-                while (index < content.length() && (Character.isLetterOrDigit(content.charAt(index)))) {
+                while (index < content.length() && Character.isLetterOrDigit(content.charAt(index))) {
                     identifier.append(content.charAt(index));
                     index++;
                     column++;
                 }
-
-                Position identifierPos = new Position(startIndex, row, startColumn);
-                tokens.add(new Token(TypeEnum.IDENTIFICADOR, identifier.toString(), identifierPos));
+            
+                if (!isComment) {
+                    Position identifierPos = new Position(startIndex, row, startColumn);
+                    tokens.add(new Token(TypeEnum.IDENTIFICADOR, identifier.toString(), identifierPos));
+                }
             }
 
             // Lógica para números
@@ -166,9 +190,20 @@ public class Main {
                     index++;
                     column++;
                 }
-
+            
+                if (index < content.length() && Character.isLetter(content.charAt(index)) && !isComment) {
+                    Position errPos = new Position(startIndex, row, startColumn);
+                    System.err.println("Erro Léxico: número seguido de letras na posição " + errPos);
+                    isFailedLexicalAnalysis = true;
+                
+                    while (index < content.length() && Character.isLetterOrDigit(content.charAt(index))) {
+                        index++;
+                        column++;
+                    }
+                    continue;
+                }
+            
                 Position numberPos = new Position(startIndex, row, startColumn);
-                //verifica se o número não é um comentario e só então adiciona ao conjunto de tokens
                 if (!isComment) {
                     tokens.add(new Token(TypeEnum.DIGITO, number.toString(), numberPos));
                 }
