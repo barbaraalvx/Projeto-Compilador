@@ -1,61 +1,78 @@
 package codegen;
 
-import syntacticanalysis.BinaryOperation;
-import syntacticanalysis.Const;
-import syntacticanalysis.Expression;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import syntacticanalysis.*;
 
 public class CodeGenerator {
 
-    private final StringBuilder builder = new StringBuilder();
+    public String generate(Program program) {
+        StringBuilder sb = new StringBuilder();
 
-    public String generate(Expression expr) {
-        builder.setLength(0);
-        builder.append(".section .text\n");
-        builder.append(".globl _start\n");
-        builder.append("_start:\n");
+        Set<String> vars = new LinkedHashSet<>();
+        for (Declaration d : program.getDeclarations()) vars.add(d.getVariableName());
 
-        generateExpression(expr);
+        sb.append(".section .bss\n");
+        for (String v : vars) sb.append(".lcomm ").append(v).append(", 8\n");
 
-        builder.append("call imprime_num\n");
-        builder.append("call sair\n");
-        builder.append(".include \"runtime.s\"\n");
+        sb.append(".section .text\n");
+        sb.append(".globl _start\n");
+        sb.append("_start:\n");
 
-        return builder.toString();
+        for (Declaration d : program.getDeclarations()) {
+            genExpr(d.getExpression(), sb);
+            sb.append("    mov %rax, ").append(d.getVariableName()).append("\n");
+        }
+
+        genExpr(program.getFinalExpression(), sb);
+        sb.append("    call imprime_num\n");
+        sb.append("    call sair\n");
+        sb.append(".include \"runtime.s\"\n");
+
+        return sb.toString();
     }
 
-    private void generateExpression(Expression expr) {
-        if (expr instanceof Const c) {
-            builder.append("mov $")
-                    .append( c.getValor())
-                    .append(", %rax\n");
-        } else if (expr instanceof BinaryOperation bin) {
-            String op = bin.getOperator().getValor();
+    public String generate(Expression expr) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(".section .text\n");
+        sb.append(".globl _start\n");
+        sb.append("_start:\n");
+        genExpr(expr, sb);
+        sb.append("    call imprime_num\n");
+        sb.append("    call sair\n");
+        sb.append(".include \"runtime.s\"\n");
+        return sb.toString();
+    }
 
-            // Gera lado direito primeiro e empilha
-            generateExpression(bin.getRight());
-            builder.append("    push %rax\n");
-
-            // Gera lado esquerdo
-            generateExpression(bin.getLeft());
-            builder.append("    pop %rbx\n");
-
-            switch (op) {
-                case "+":
-                    builder.append("    add %rbx, %rax\n");
-                    break;
-                case "-":
-                    builder.append("    sub %rbx, %rax\n"); // rax - rbx
-                    break;
-                case "*":
-                    builder.append("    imul %rbx, %rax\n");
-                    break;
-                case "/":
-                    builder.append("    xor %rdx, %rdx\n");
-                    builder.append("    div %rbx\n");
-                    break;
-                default:
-                    throw new RuntimeException("Operador inválido: " + op);
-            }
+    private void genExpr(Expression e, StringBuilder sb) {
+        if (e instanceof Const c) {
+            sb.append("    mov $").append(c.getValor()).append(", %rax\n");
+            return;
         }
+        if (e instanceof VariableReference v) {
+            sb.append("    mov ").append(v.getName()).append(", %rax\n");
+            return;
+        }
+        if (e instanceof BinaryOperation b) {
+            genExpr(b.getLeft(), sb);
+            sb.append("    push %rax\n");
+            genExpr(b.getRight(), sb);
+            sb.append("    mov %rax, %rcx\n");
+            sb.append("    pop %rax\n");
+
+            String op = b.getOperator().getValor();
+            switch (op) {
+                case "+" -> sb.append("    add %rcx, %rax\n");
+                case "-" -> sb.append("    sub %rcx, %rax\n");
+                case "*" -> sb.append("    imul %rcx, %rax\n");
+                case "/" -> {
+                    sb.append("    cqo\n");
+                    sb.append("    idiv %rcx\n");
+                }
+                default -> throw new IllegalStateException("Operador inválido: " + op);
+            }
+            return;
+        }
+        throw new IllegalStateException("Expressão não suportada: " + e.getClass());
     }
 }

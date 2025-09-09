@@ -80,11 +80,15 @@ public class Main {
             System.out.println("Expressão (sem variáveis): " + res.substitutedFinal);
             System.out.println("Ambiente (variáveis): " + res.env);
             System.out.println("Resultado: " + res.value);
+            
+            System.out.println("----------------------------------------------------------------------");
+            System.out.println("Geração de Código Assembly");
+            System.out.println("----------------------------------------------------------------------");
             CodeGenerator generator = new CodeGenerator();
-            String assemblyCode = generator.generate(expr);
+            String assemblyCode = generator.generate(program);
             String inputName = args[0].substring(args[0].lastIndexOf('/') + 1);
             String baseName = inputName.replace(".txt", "");
-            String outputFile = "src/assembly/saida_" + baseName + ".s";
+            String outputFile = "assembly/saida_" + baseName + ".s";
 
             FileWriterUtil.writeToFile(assemblyCode, outputFile);
         } catch (SyntaxException e) {
