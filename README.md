@@ -9,23 +9,22 @@
 
 ## Descrição:
 
-Este projeto implementa um compilador completo para a linguagem **EC2 (Expressões Constantes 2)**, desenvolvido na disciplina de Construção de Compiladores I.
+Este projeto implementa um compilador para a linguagem EV (Expressões com Variáveis), desenvolvido na disciplina de Construção de Compiladores I.
 
-O principal objetivo desta versão é permitir que expressões sejam escritas sem parênteses obrigatórios, aplicando as regras de precedência e associatividade de operadores.
+A linguagem EV é uma extensão da EC2 (Expressões Constantes 2) e adiciona a possibilidade de declarar e usar variáveis em expressões aritméticas.
 
-A linguagem EC2 aceita expressões aritméticas compostas por:
-- Números inteiros
-- Operadores `+`, `-`, `*`, `/`
-- Parênteses opcionais, que são usados para controlar a ordem das operações, conforme a notação matemática.
-- Comentários delimitados com `#comentários#` (ignorados na análise)
+O programa em EV é composto por:
 
-O compilador é dividido em 3 etapas:
-1. Análise léxica: identifica tokens válidos e erros léxicos.
-2. Análise sintática: constrói uma Árvore Sintática Abstrata (AST) que reflete as regras de precedência e associatividade.
-3. Geração de código: produz código Assembly x86-64 em sintaxe AT&T, que:
-    - Coloca o resultado no registrador `%rax`
-    - Chama funções `imprime_num` e `sair`(implementadas em `runtime.s`)
+Zero ou mais declarações de variáveis (ident = expressão;)
 
+Uma expressão final obrigatória, iniciada com = cujo resultado é o resultado do programa.
+
+Exemplo de programa em EV:
+
+ x = (7 + 4) * 12;   
+ y = x * 3 + 11;  
+ = (x * y) + (x * 11) + (y * 13)  
+Resultado: 60467
 
 O projeto também inclui execução completa do Assembly:
 - Montagem (as)
@@ -101,7 +100,7 @@ ld saida_{exemplo}.o runtime.o -o exec_{exemplo}
 ./exec_{exemplo}
 ```
 
-## Testes de precedência e associatividade
+## Testes de precedência, associatividade e variáveis
 
 Os arquivos de teste abaixo são exemplos de expressões que não utilizam parênteses, a fim de testar a capacidade do compilador de aplicar corretamente as regras de precedência e associatividade.
 
@@ -110,6 +109,9 @@ Os arquivos de teste abaixo são exemplos de expressões que não utilizam parê
 - soma.txt: Testa a associatividade à esquerda de operadores de mesma precedência (+ e -).
 - multiplicacao.txt: Testa a associatividade à esquerda de operadores de mesma precedência (* e /).
 
+Os arquivos de teste abaixo verificam se a falta de variáveis ou ponto e virgula ao final da expressão são respeitadas:
+- variavel_nao_declarada.txt: Testa se a falta de uma variavel ao final está falhando.
+- variavel_sem_pontovirgula.txt: Testa se o compilador reconhece apenas expressoes com ponto e virgula no final.
 
 ## Requisitos:
 

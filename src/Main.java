@@ -88,7 +88,7 @@ public class Main {
             String assemblyCode = generator.generate(program);
             String inputName = args[0].substring(args[0].lastIndexOf('/') + 1);
             String baseName = inputName.replace(".txt", "");
-            String outputFile = "assembly/saida_" + baseName + ".s";
+            String outputFile = "src/assembly/saida_" + baseName + ".s";
 
             FileWriterUtil.writeToFile(assemblyCode, outputFile);
         } catch (SyntaxException e) {

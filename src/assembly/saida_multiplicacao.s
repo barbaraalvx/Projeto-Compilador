@@ -1,24 +1,32 @@
+.section .bss
+.lcomm a, 8
 .section .text
 .globl _start
 _start:
-mov $5, %rax
+    mov $427, %rax
     push %rax
-mov $231, %rax
+    mov $7, %rax
+    mov %rax, %rcx
+    pop %rax
+    cqo
+    idiv %rcx
     push %rax
-mov $11, %rax
-    pop %rbx
-    imul %rbx, %rax
+    mov $11, %rax
     push %rax
-mov $7, %rax
+    mov $231, %rax
+    mov %rax, %rcx
+    pop %rax
+    imul %rcx, %rax
+    mov %rax, %rcx
+    pop %rax
+    add %rcx, %rax
     push %rax
-mov $427, %rax
-    pop %rbx
-    xor %rdx, %rdx
-    div %rbx
-    pop %rbx
-    add %rbx, %rax
-    pop %rbx
-    add %rbx, %rax
-call imprime_num
-call sair
+    mov $5, %rax
+    mov %rax, %rcx
+    pop %rax
+    add %rcx, %rax
+    mov %rax, a
+    mov a, %rax
+    call imprime_num
+    call sair
 .include "runtime.s"
