@@ -2,7 +2,18 @@ package syntacticanalysis;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import syntacticanalysis.commands.AssignCmd;
+import syntacticanalysis.commands.Cmd;
+import syntacticanalysis.commands.IfCmd;
+import syntacticanalysis.commands.WhileCmd;
 import syntacticanalysis.exceptions.SyntaxException;
+import syntacticanalysis.expression.BinaryOperation;
+import syntacticanalysis.expression.Const;
+import syntacticanalysis.expression.Expression;
+import lexicalanalysis.Position;
+import lexicalanalysis.Token;
+import lexicalanalysis.TypeEnum;
 
 public class Parser {
 
@@ -45,22 +56,20 @@ public class Parser {
     }
 
     // Sobrecarga de expect para mensagens de erro mais detalhadas (se quiser usar)
-    private Token expect(String expected, TypeEnum... possibleTypes) throws SyntaxException {
+    private Token expect(String expectedMsg, TypeEnum... possibleTypes) throws SyntaxException {
         Token token = nextToken();
         boolean matches = false;
         if (token != null) {
-            for (TypeEnum type : possibleTypes) {
-                if (token.getType() == type) {
-                    matches = true;
-                    break;
-                }
+            for (TypeEnum t : possibleTypes) {
+                if (token.getType() == t) { matches = true; break; }
             }
         }
         if (!matches) {
             throw new SyntaxException(
-                    token.getPosition(),
-                    TypeEnum.DIGITO,
-                    token.getType()
+                    token != null ? token.getPosition() : new Position(-1,-1,-1),
+                    // aqui você pode passar null e logar expectedMsg, ou escolher o 1º possível:
+                    possibleTypes.length > 0 ? possibleTypes[0] : null,
+                    token != null ? token.getType() : null
             );
         }
         return token;
@@ -71,35 +80,45 @@ public class Parser {
         return parseProgram();
     }
 
-    // <programa> ::= <decl>* <result>
+    // <programa> ::= <decl>* '{' 'return' <exp> ';' '}'
     private Program parseProgram() throws SyntaxException {
         List<Declaration> declarations = new ArrayList<>();
-        Token tok = lookNextToken();
-
-        // declarações enquanto iniciar por IDENTIFICADOR
-        while (tok != null && tok.getType() == TypeEnum.IDENTIFICADOR) {
-            Declaration dec = parseDeclaration();
-            declarations.add(dec);
-            tok = lookNextToken();
+        while (peek(TypeEnum.IDENTIFICADOR)) {
+            declarations.add(parseDeclaration());
         }
+        expect(TypeEnum.LCHAVE);
 
-        // expressão final deve começar com '='
-        expect(TypeEnum.IGUAL);
-        Expression finalExpression = parseExpA();
+        // NOVO: zero ou mais comandos até encontrarmos 'return'
+        List<Cmd> commands = parseCmdsUntilReturn();
 
-        // arquivo deve terminar após a expressão final
+        expect(TypeEnum.RETURN);
+        Expression result = parseExpC();
+        expect(TypeEnum.PONTO_VIRGULA);
+        expect(TypeEnum.RCHAVE);
         expect(TypeEnum.EOF);
 
-        return new Program(declarations, finalExpression);
+        return new Program(declarations, commands, result);
     }
 
     // <decl> ::= <ident> '=' <exp> ';'
     private Declaration parseDeclaration() throws SyntaxException {
         Token identToken = expect(TypeEnum.IDENTIFICADOR);
         expect(TypeEnum.IGUAL);
-        Expression expression = parseExpA();
+        Expression expression = parseExpC();            // <- e aqui
         expect(TypeEnum.PONTO_VIRGULA);
         return new Declaration(identToken.getLexeme(), expression);
+    }
+
+    // expC ::= expA ( (MENOR | MAIOR | IGUAL_IGUAL) expA )*
+    private Expression parseExpC() throws SyntaxException {
+        Expression left = parseExpA(); // já existente
+        while (peek(TypeEnum.MENOR) || peek(TypeEnum.MAIOR) || peek(TypeEnum.IGUALDADE)) {
+            Token opTok = nextToken();
+            Expression right = parseExpA();
+            TypeEnum op = opTok.getType(); // MENOR, MAIOR, IGUAL_IGUAL
+            left = new BinaryOperation(op, left, right);
+        }
+        return left;
     }
 
     // <exp> ::= <exp_m> (('+' | '-') <exp_m>)*
@@ -149,7 +168,7 @@ public class Parser {
             }
             case ABRE_PARENTESES -> {
                 nextToken();
-                Expression inner = parseExpA();
+                Expression inner = parseExpC(); // <-- em vez de parseExpA()
                 expect(TypeEnum.FECHA_PARENTESES);
                 return inner;
             }
@@ -162,4 +181,55 @@ public class Parser {
             }
         }
     }
+
+    private List<Cmd> parseCmdsUntilReturn() throws SyntaxException {
+        List<Cmd> cmds = new ArrayList<>();
+        while (!peek(TypeEnum.RETURN)) {
+            cmds.add(parseCmd());
+        }
+        return cmds;
+    }
+
+    private Cmd parseCmd() throws SyntaxException {
+        if (peek(TypeEnum.IF))    return parseIf();
+        if (peek(TypeEnum.WHILE)) return parseWhile();
+
+        // atribuição: IDENT '=' <expC> ';'
+        Token id = expect(TypeEnum.IDENTIFICADOR);
+        expect(TypeEnum.IGUAL);
+        Expression e = parseExpC();
+        expect(TypeEnum.PONTO_VIRGULA);
+        return new AssignCmd(id.getLexeme(), e);
+    }
+
+    private IfCmd parseIf() throws SyntaxException {
+        expect(TypeEnum.IF);
+        Expression cond = parseExpC();
+        List<Cmd> thenPart = parseBracedCmds();
+        expect(TypeEnum.ELSE);
+        List<Cmd> elsePart = parseBracedCmds();
+        return new IfCmd(cond, thenPart, elsePart);
+    }
+
+    private WhileCmd parseWhile() throws SyntaxException {
+        expect(TypeEnum.WHILE);
+        Expression cond = parseExpC();
+        List<Cmd> body = parseBracedCmds();
+        return new WhileCmd(cond, body);
+    }
+
+    private List<Cmd> parseBracedCmds() throws SyntaxException {
+        expect(TypeEnum.LCHAVE);
+        List<Cmd> xs = new ArrayList<>();
+        while (!peek(TypeEnum.RCHAVE)) {
+            // importante: 'return' não é comando — se aparecer aqui é erro sintático da sua linguagem
+            if (peek(TypeEnum.RETURN)) {
+                throw new SyntaxException(lookNextToken().getPosition(), TypeEnum.IDENTIFICADOR, TypeEnum.RETURN);
+            }
+            xs.add(parseCmd());
+        }
+        expect(TypeEnum.RCHAVE);
+        return xs;
+    }
+
 }

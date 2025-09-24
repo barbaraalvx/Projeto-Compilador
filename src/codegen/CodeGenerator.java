@@ -3,6 +3,9 @@ package codegen;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import syntacticanalysis.*;
+import syntacticanalysis.expression.BinaryOperation;
+import syntacticanalysis.expression.Const;
+import syntacticanalysis.expression.Expression;
 
 public class CodeGenerator {
 

@@ -2,6 +2,9 @@ package semanticalanalysis;
 
 import syntacticanalysis.*;
 import semanticalanalysis.exceptions.SemanticException;
+import syntacticanalysis.expression.BinaryOperation;
+import syntacticanalysis.expression.Const;
+import syntacticanalysis.expression.Expression;
 
 public class SemanticAnalyzer {
     private final SymbolTable symbols = new SymbolTable();

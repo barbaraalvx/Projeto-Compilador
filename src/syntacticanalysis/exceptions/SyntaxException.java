@@ -1,7 +1,7 @@
 package syntacticanalysis.exceptions;
 
-import syntacticanalysis.Position;
-import syntacticanalysis.TypeEnum;
+import lexicalanalysis.Position;
+import lexicalanalysis.TypeEnum;
 
 public class SyntaxException extends RuntimeException{
     public SyntaxException(Position pos, TypeEnum expected, TypeEnum found) {

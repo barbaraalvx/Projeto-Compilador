@@ -1,4 +1,4 @@
-# Compiladores – Atividade 07 – Precedência
+# Compiladores – Atividade 09 – Comandos
 
 ### Alunos:
 - Bárbara Geovanna Alves Cavalcante - 20220055021

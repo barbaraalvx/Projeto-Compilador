@@ -1,5 +1,7 @@
 package syntacticanalysis;
 
+import syntacticanalysis.expression.Expression;
+
 public class VariableReference extends Expression {
     private final String name;
 
