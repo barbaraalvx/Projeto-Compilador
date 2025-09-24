@@ -90,3 +90,4 @@ nb-configuration.xml
 *.log
 
 .venv
+/src/assembly/*
