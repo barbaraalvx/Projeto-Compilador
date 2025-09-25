@@ -2,6 +2,9 @@ package semanticalanalysis;
 
 import syntacticanalysis.*;
 import semanticalanalysis.exceptions.SemanticException;
+import syntacticanalysis.expression.BinaryOperation;
+import syntacticanalysis.expression.Const;
+import syntacticanalysis.expression.Expression;
 
 public class SemanticAnalyzer {
     private final SymbolTable symbols = new SymbolTable();
@@ -14,14 +17,17 @@ public class SemanticAnalyzer {
         checkExpression(program.getFinalExpression());
     }
 
-    private void checkExpression(Expression expr) {
-        if (expr instanceof Const) {
+    private void checkExpression(Expression expression) {
+        if (expression instanceof Const) {
             return;
-        } else if (expr instanceof VariableReference var) {
-            if (!symbols.isDeclared(var.getName())) {
-                throw new SemanticException("Variável não declarada: " + var.getName());
+
+        } else if (expression instanceof VariableReference variableReference) {
+
+            if (!symbols.isDeclared(variableReference.getName())) {
+                throw new SemanticException("Variável não declarada: " + variableReference.getName());
             }
-        } else if (expr instanceof BinaryOperation bin) {
+
+        } else if (expression instanceof BinaryOperation bin) {
             checkExpression(bin.getLeft());
             checkExpression(bin.getRight());
         }

@@ -1,0 +1,10 @@
+i = 0;
+n = 5;
+soma = 0;
+{
+  while i == n {
+    soma = soma + i;
+    i = i + 1;
+  }
+  return soma;
+}

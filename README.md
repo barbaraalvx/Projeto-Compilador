@@ -1,4 +1,4 @@
-# Compiladores – Atividade 07 – Precedência
+# Compiladores – Atividade 09 – Comandos
 
 ### Alunos:
 - Bárbara Geovanna Alves Cavalcante - 20220055021
@@ -9,22 +9,61 @@
 
 ## Descrição:
 
-Este projeto implementa um compilador para a linguagem EV (Expressões com Variáveis), desenvolvido na disciplina de Construção de Compiladores I.
+Este projeto implementa um compilador para uma linguagem de programação imperativa simples, desenvolvido na disciplina de Construção de Compiladores I.
 
-A linguagem EV é uma extensão da EC2 (Expressões Constantes 2) e adiciona a possibilidade de declarar e usar variáveis em expressões aritméticas.
+A linguagem suporta:
+- **Declaração de variáveis** com inicialização
+- **Comandos de atribuição** (variável = expressão)
+- **Estruturas de controle**:
+  - `if-else` com condições
+  - `while` para loops
+- **Expressões aritméticas** com operadores: `+`, `-`, `*`, `/`
+- **Operadores de comparação**: `==`, `<`, `>`
+- **Comando `return`** para retornar valores
 
-O programa em EV é composto por:
+### Sintaxe da Linguagem:
 
-Zero ou mais declarações de variáveis (ident = expressão;)
+```javascript
+// Declarações de variáveis
+variavel = expressao;
 
-Uma expressão final obrigatória, iniciada com = cujo resultado é o resultado do programa.
+// Bloco de comandos
+{
+  // Comandos de atribuição
+  variavel = expressao;
+  
+  // Estrutura condicional
+  if condicao {
+    comandos;
+  } else {
+    comandos;
+  }
+  
+  // Loop
+  while condicao {
+    comandos;
+  }
+  
+  // Retorno
+  return expressao;
+}
+```
 
-Exemplo de programa em EV:
+### Exemplo de programa:
 
- x = (7 + 4) * 12;   
- y = x * 3 + 11;  
- = (x * y) + (x * 11) + (y * 13)  
-Resultado: 60467
+```javascript
+x = 2;
+y = 2;
+{
+  if x == y {
+    x = 10;
+  } else {
+    x = 5;
+  }
+  return x;
+}
+// Resultado: 10
+```
 
 O projeto também inclui execução completa do Assembly:
 - Montagem (as)
@@ -57,17 +96,24 @@ docker run --rm -v "$(pwd -W)/src/inputs:/app/inputs" compilador-java inputs/{ex
 
 ### 2. Rodar todos os testes automaticamente:
 
-- O projeto inclui um script que executa todos os arquivos .txt da pasta src/inputs dentro do contêiner.
+- O projeto inclui scripts que executam todos os arquivos .txt da pasta src/inputs dentro do contêiner.
 
 #### Executar no Linux/Git Bash/WSL:
 ```bash 
-./test.sh
+./test.sh                    # Testes básicos (sem asserções)
+./test_with_assertions.sh    # Testes com validação de resultados
 ```
 
-#### O script:
-- Constrói a imagem Docker
+#### Executar no Windows PowerShell:
+```powershell
+.\test.ps1                   # Versão PowerShell para Windows
+```
+
+#### Os scripts:
+- Constrói a imagem Docker (se necessário)
 - Executa todos os testes .txt
 - Monta, linka e executa cada .s gerado
+- **test_with_assertions.sh**: Compara resultados com arquivos `.expected`
 - Exibe um resumo dos testes ao final (resultado e status)
 
 ### 3. Executar um `.s` específico
@@ -100,18 +146,30 @@ ld saida_{exemplo}.o runtime.o -o exec_{exemplo}
 ./exec_{exemplo}
 ```
 
-## Testes de precedência, associatividade e variáveis
+## Casos de Teste
 
-Os arquivos de teste abaixo são exemplos de expressões que não utilizam parênteses, a fim de testar a capacidade do compilador de aplicar corretamente as regras de precedência e associatividade.
+Os arquivos de teste demonstram diferentes aspectos da linguagem:
 
-- faltaparentese.txt: Testa uma expressão com operadores de diferentes precedências e sem parênteses.
-- misturado.txt: Contém uma expressão mais complexa que mistura operadores de soma, subtração, multiplicação e divisão.
-- soma.txt: Testa a associatividade à esquerda de operadores de mesma precedência (+ e -).
-- multiplicacao.txt: Testa a associatividade à esquerda de operadores de mesma precedência (* e /).
+### Testes de Estruturas de Controle:
+- **igualdade.txt**: Testa estrutura `if-else` com comparação de igualdade
+- **condicaofalsa.txt**: Testa loop `while` com condição falsa (nunca executa)
+- **contagem.txt**: Testa loop `while` com decremento
+- **somaenunciado.txt**: Testa loop `while` com soma acumulativa
 
-Os arquivos de teste abaixo verificam se a falta de variáveis ou ponto e virgula ao final da expressão são respeitadas:
-- variavel_nao_declarada.txt: Testa se a falta de uma variavel ao final está falhando.
-- variavel_sem_pontovirgula.txt: Testa se o compilador reconhece apenas expressoes com ponto e virgula no final.
+### Testes de Algoritmos:
+- **mdc.txt**: Implementa algoritmo de Euclides para máximo divisor comum
+- **delta.txt**: Calcula discriminante de equação quadrática com estrutura condicional
+- **parenteses.txt**: Testa expressões aritméticas complexas com parênteses
+
+### Resultados Esperados:
+Cada teste possui um arquivo `.expected` com o resultado correto:
+- `igualdade.expected`: 10
+- `condicaofalsa.expected`: 0  
+- `contagem.expected`: 0
+- `somaenunciado.expected`: 45
+- `mdc.expected`: 6
+- `delta.expected`: 8
+- `parenteses.expected`: 17
 
 ## Requisitos:
 
@@ -120,8 +178,29 @@ Os arquivos de teste abaixo verificam se a falta de variáveis ou ponto e virgul
 - No caso de execução pura em Java, JDK 17+
 
 ## Observações finais
-- O pipeline via Docker é mais portável e evita problemas de ambiente.
-- O test.sh faz teste completo de geração + execução de código Assembly.
-- O run.sh é útil para depurar ou testar .s específico sem rodar todos os casos.
-- Testes só usaram Cram na atividade 4, mas o método foi abandonado por incompatibilidade com codificações diferentes de ASCII puro na AST.
-    - A partir da entrega 5, a validação passou a ser feita com scripts Bash que automatizam o pipeline. `test.sh` aplica o fluxo de execução a todos os casos de teste (src/inputs/*.txt) e marca como falhos os casos em que o `compilador retorna um erro`, o `.s não é gerado` ou a `montagem/linkagem falha`.
+
+### Pipeline de Compilação:
+- **Análise Léxica**: Tokenização do código fonte
+- **Análise Sintática**: Construção da AST (Abstract Syntax Tree)
+- **Análise Semântica**: Verificação de tipos e declarações
+- **Execução Semântica**: Avaliação de constantes e otimizações
+- **Geração de Código**: Produção de assembly x86-64
+- **Montagem e Linkagem**: Geração de executável
+- **Execução**: Teste do programa final
+
+### Sistema de Testes:
+- **test.sh**: Testes básicos (smoke tests)
+- **test_with_assertions.sh**: Testes com validação de resultados
+- **test.ps1**: Versão PowerShell (com limitações no Windows)
+- **Arquivos .expected**: Resultados esperados para cada teste
+
+### Compatibilidade:
+- **WSL (Recomendado)**: Máxima compatibilidade com ferramentas Unix
+- **Git Bash**: Alternativa para Windows
+- **PowerShell**: Limitado por problemas de execução de binários
+- **Docker**: Ambiente isolado e portável
+
+### Validação:
+- O sistema valida tanto a **compilação bem-sucedida** quanto a **correção dos resultados**
+- Cada teste possui resultado esperado documentado
+- Falhas são categorizadas: compilação, montagem, linkagem ou resultado incorreto
