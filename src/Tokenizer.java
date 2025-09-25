@@ -7,7 +7,8 @@ import java.util.List;
 
 public class Tokenizer {
 
-    public Tokenizer() {}
+    public Tokenizer() {
+    }
 
     public static List<Token> tokenize(String content) {
         int row = 0;
@@ -104,10 +105,10 @@ public class Tokenizer {
 
                     switch (lex) {
                         case "return" -> tokens.add(new Token(TypeEnum.RETURN, lex, identifierPos));
-                        case "if"     -> tokens.add(new Token(TypeEnum.IF,     lex, identifierPos));
-                        case "else"   -> tokens.add(new Token(TypeEnum.ELSE,   lex, identifierPos));
-                        case "while"  -> tokens.add(new Token(TypeEnum.WHILE,  lex, identifierPos));
-                        default       -> tokens.add(new Token(TypeEnum.IDENTIFICADOR, lex, identifierPos));
+                        case "if" -> tokens.add(new Token(TypeEnum.IF, lex, identifierPos));
+                        case "else" -> tokens.add(new Token(TypeEnum.ELSE, lex, identifierPos));
+                        case "while" -> tokens.add(new Token(TypeEnum.WHILE, lex, identifierPos));
+                        default -> tokens.add(new Token(TypeEnum.IDENTIFICADOR, lex, identifierPos));
                     }
                 }
             }

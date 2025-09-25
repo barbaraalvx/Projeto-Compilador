@@ -28,7 +28,7 @@ public class PrintUtils {
     }
 
     public static void printEnvironmentAndResult(SemanticExecutor.ExecResult res){
-        System.out.println("Ambiente (variáveis): " + res.env);
-        System.out.println("Resultado: " + res.value);
+        System.out.println("Ambiente (variáveis): " + res.env());
+        System.out.println("Resultado: " + res.value());
     }
 }

@@ -28,15 +28,12 @@ public class Main {
     static Expression returnExpression;
 
     // Analisadores
-    static Tokenizer tokenenizer = new Tokenizer();
-    static SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();;
-    static SemanticExecutor semanticExecutor = new SemanticExecutor();
-    static CodeGenerator codeGenerator = new CodeGenerator();
+    final static SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
+    final static SemanticExecutor semanticExecutor = new SemanticExecutor();
+    final static CodeGenerator codeGenerator = new CodeGenerator();
 
     //Arquivos de entrada e saída
     static String assemblyCode;
-    static String inputFileName;
-    static String baseName;
     static String outputFileName;
     static String inputFileContent;
 
@@ -49,7 +46,8 @@ public class Main {
         tokenList.forEach(System.out::println);
 
         if (isFailedLexicalAnalysis) {
-            printLexicalAnalysisFailed(); return;
+            printLexicalAnalysisFailed();
+            return;
         }
 
         try {
@@ -82,10 +80,10 @@ public class Main {
 
             SemanticExecutor.ExecResult executionResult = semanticExecutor.execute(parsedProgram);
 
-            if (executionResult.substitutedFinal instanceof BinaryOperation bin2) {
+            if (executionResult.substitutedFinal() instanceof BinaryOperation bin2) {
                 bin2.printTree();
             } else {
-                System.out.println("AST (final): " + executionResult.substitutedFinal);
+                System.out.println("AST (final): " + executionResult.substitutedFinal());
             }
 
             printEnvironmentAndResult(executionResult);
@@ -124,11 +122,12 @@ public class Main {
     }
 
     private static void generateFile(String[] args) {
-        Path inputPath   = Paths.get(args[0]);                 // caminho da entrada (absoluto ou relativo)
-        String baseName  = stripExtension(inputPath.getFileName().toString());
+        Path inputPath = Paths.get(args[0]);                 // caminho da entrada (absoluto ou relativo)
+        String baseName = stripExtension(inputPath.getFileName().toString());
         Path outPath = Paths.get("src", "assembly", "saida_" + baseName + ".s");
-        outputFileName   = outPath.toString();                 // mantém a sua variável global, se quiser
+        outputFileName = outPath.toString();                 // mantém a sua variável global, se quiser
     }
+
     private static String stripExtension(String name) {
         int i = name.lastIndexOf('.');
         return (i > 0) ? name.substring(0, i) : name;

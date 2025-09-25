@@ -23,34 +23,37 @@ public class Declaration {
         String branch = isLast ? "└── " : "├── ";
         System.out.println(prefix + branch + "Decl " + variableName);
 
-        // prefixo para os filhos desta declaração
         String childPrefix = prefix + (isLast ? "    " : "│   ");
 
-        // imprime a expressão associada à declaração
         printExpr(expression, childPrefix, true);
     }
 
     // ----- helpers -----
 
-    private void printExpr(Expression e, String prefix, boolean isLast) {
+    private void printExpr(Expression expression, String prefix, boolean isLast) {
         String branch = isLast ? "└── " : "├── ";
-        if (e instanceof BinaryOperation bo) {
-            System.out.println(prefix + branch + ((BinaryOperation) e).getOperator().getValor());
+        if (expression instanceof BinaryOperation binaryOperation) {
+
+            System.out.println(prefix + branch + binaryOperation.getOperator().getValor());
             String next = prefix + (isLast ? "    " : "│   ");
-            printExprChild(bo.getLeft(),  next, false);
-            printExprChild(bo.getRight(), next, true);
+            printExprChild(binaryOperation.getLeft(),  next, false);
+            printExprChild(binaryOperation.getRight(), next, true);
+
         } else {
-            System.out.println(prefix + branch + e);
+            System.out.println(prefix + branch + expression);
         }
     }
 
     private void printExprChild(Expression e, String prefix, boolean isLast) {
         String branch = isLast ? "└── " : "├── ";
+
         if (e instanceof BinaryOperation bo) {
+
             System.out.println(prefix + branch + bo.getOperator().getValor());
             String next = prefix + (isLast ? "    " : "│   ");
             printExprChild(bo.getLeft(),  next, false);
             printExprChild(bo.getRight(), next, true);
+
         } else {
             System.out.println(prefix + branch + e);
         }

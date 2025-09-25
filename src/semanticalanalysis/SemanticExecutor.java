@@ -3,25 +3,17 @@ package semanticalanalysis;
 import java.util.*;
 import syntacticanalysis.*;
 import semanticalanalysis.exceptions.SemanticException;
-import syntacticanalysis.commands.AssignCmd;
-import syntacticanalysis.commands.Cmd;
-import syntacticanalysis.commands.IfCmd;
-import syntacticanalysis.commands.WhileCmd;
+import syntacticanalysis.commands.AssignCommand;
+import syntacticanalysis.commands.Command;
+import syntacticanalysis.commands.IfCommand;
+import syntacticanalysis.commands.WhileCommand;
 import syntacticanalysis.expression.BinaryOperation;
 import syntacticanalysis.expression.Const;
 import syntacticanalysis.expression.Expression;
 
 public class SemanticExecutor {
 
-    public static class ExecResult {
-        public final Map<String, Integer> env;
-        public final Expression substitutedFinal;
-        public final int value;
-        public ExecResult(Map<String, Integer> env, Expression substitutedFinal, int value) {
-            this.env = env;
-            this.substitutedFinal = substitutedFinal;
-            this.value = value;
-        }
+    public record ExecResult(Map<String, Integer> env, Expression substitutedFinal, int value) {
     }
 
     public ExecResult execute(Program program) {
@@ -34,7 +26,7 @@ public class SemanticExecutor {
         }
 
         // 2) comandos -> aplicam efeitos (assign/if/while)
-        for (Cmd c : program.getCommands()) {
+        for (Command c : program.getCommands()) {
             exec(c, env);
         }
 
@@ -47,43 +39,46 @@ public class SemanticExecutor {
     }
 
     // ===== execução de comandos =====
-    private void exec(Cmd c, Map<String, Integer> env) {
-        if (c instanceof AssignCmd a) {
-            int v = eval(a.expr, env);
-            env.put(a.var, v);
+    private void exec(Command c, Map<String, Integer> env) {
+        if (c instanceof AssignCommand(String var, Expression expression)) {
+            int v = eval(expression, env);
+            env.put(var, v);
             return;
         }
-        if (c instanceof IfCmd i) {
-            int cond = eval(i.cond, env);
-            List<Cmd> branch = (cond != 0) ? i.thenPart : i.elsePart;
-            for (Cmd cc : branch) exec(cc, env);
+
+        if (c instanceof IfCommand i) {
+            int cond = eval(i.cond(), env);
+            List<Command> branch = (cond != 0) ? i.thenPart() : i.elsePart();
+            for (Command cc : branch) exec(cc, env);
             return;
         }
-        if (c instanceof WhileCmd w) {
-            while (eval(w.cond, env) != 0) {
-                for (Cmd cc : w.body) exec(cc, env);
+
+        if (c instanceof WhileCommand(Expression cond, List<Command> body)) {
+            while (eval(cond, env) != 0) {
+                for (Command cc : body) exec(cc, env);
             }
             return;
         }
+
         throw new IllegalStateException("Tipo de comando desconhecido: " + c.getClass());
     }
 
     // ===== avaliador de expressões =====
-    private int eval(Expression e, Map<String, Integer> env) {
-        if (e instanceof Const c) {
+    private int eval(Expression expression, Map<String, Integer> env) {
+        if (expression instanceof Const c) {
             return c.getValor();
         }
-        if (e instanceof VariableReference v) {
+        if (expression instanceof VariableReference v) {
             Integer val = env.get(v.getName());
             if (val == null) {
                 throw new SemanticException("Variável não declarada/inicializada: " + v.getName());
             }
             return val;
         }
-        if (e instanceof BinaryOperation b) {
-            int a = eval(b.getLeft(), env);
-            int c = eval(b.getRight(), env);
-            return switch (b.getOperator()) {
+        if (expression instanceof BinaryOperation binaryOperation) {
+            int a = eval(binaryOperation.getLeft(), env);
+            int c = eval(binaryOperation.getRight(), env);
+            return switch (binaryOperation.getOperator()) {
                 case SOMA -> a + c;
                 case SUBTRACAO -> a - c;
                 case MULTIPLICACAO -> a * c;
@@ -91,10 +86,10 @@ public class SemanticExecutor {
                 case MENOR -> (a < c) ? 1 : 0;
                 case MAIOR -> (a > c) ? 1 : 0;
                 case IGUALDADE -> (a == c) ? 1 : 0;
-                default -> throw new IllegalStateException("Operador não suportado: " + b.getOperator());
+                default -> throw new IllegalStateException("Operador não suportado: " + binaryOperation.getOperator());
             };
         }
-        throw new IllegalStateException("Tipo de expressão desconhecido: " + e.getClass());
+        throw new IllegalStateException("Tipo de expressão desconhecido: " + expression.getClass());
     }
 
     // ===== substituição (para exibir AST sem variáveis) =====

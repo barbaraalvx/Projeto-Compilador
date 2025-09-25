@@ -2,10 +2,10 @@ package codegen;
 
 import syntacticanalysis.Declaration;
 import syntacticanalysis.Program;
-import syntacticanalysis.commands.AssignCmd;
-import syntacticanalysis.commands.Cmd;
-import syntacticanalysis.commands.IfCmd;
-import syntacticanalysis.commands.WhileCmd;
+import syntacticanalysis.commands.AssignCommand;
+import syntacticanalysis.commands.Command;
+import syntacticanalysis.commands.IfCommand;
+import syntacticanalysis.commands.WhileCommand;
 import syntacticanalysis.expression.BinaryOperation;
 import syntacticanalysis.expression.Const;
 import syntacticanalysis.expression.Expression;
@@ -45,7 +45,7 @@ public class CodeGenerator {
         }
 
         // 4) Corpo de comandos vindo de program.getCommands()
-        for (Cmd c : program.getCommands()) {
+        for (Command c : program.getCommands()) {
             genCmd(c, sb);
         }
 
@@ -74,56 +74,56 @@ public class CodeGenerator {
     }
 
     // ===================== Comandos =====================
-    private void genCmd(Cmd cmd, StringBuilder sb) {
+    private void genCmd(Command command, StringBuilder sb) {
         // Troque os nomes das classes abaixo se no seu projeto forem diferentes:
-        if (cmd instanceof AssignCmd a) {
-            genExpr(a.expr, sb);
-            sb.append("    mov %rax, ").append(a.var).append("\n");
+        if (command instanceof AssignCommand a) {
+            genExpr(a.expr(), sb);
+            sb.append("    mov %rax, ").append(a.var()).append("\n");
             return;
         }
 
-        if (cmd instanceof IfCmd ic) {
+        if (command instanceof IfCommand ic) {
             String Lfalse = newLabel("Lfalso");
             String Lend   = newLabel("Lfim");
 
             // condição
-            genExpr(ic.cond, sb);
+            genExpr(ic.cond(), sb);
             sb.append("    cmp $0, %rax\n");
             sb.append("    jz ").append(Lfalse).append("\n");
 
             // then
-            genBlock(ic.thenPart, sb);
+            genBlock(ic.thenPart(), sb);
             sb.append("    jmp ").append(Lend).append("\n");
 
             // else
             sb.append(Lfalse).append(":\n");
-            genBlock(ic.elsePart, sb);
+            genBlock(ic.elsePart(), sb);
 
             sb.append(Lend).append(":\n");
             return;
         }
 
-        if (cmd instanceof WhileCmd wc) {
+        if (command instanceof WhileCommand wc) {
             String Lstart = newLabel("Linicio");
             String Lend   = newLabel("Lfim");
 
             sb.append(Lstart).append(":\n");
-            genExpr(wc.cond, sb);
+            genExpr(wc.cond(), sb);
             sb.append("    cmp $0, %rax\n");
             sb.append("    jz ").append(Lend).append("\n");
 
-            genBlock(wc.body, sb);
+            genBlock(wc.body(), sb);
             sb.append("    jmp ").append(Lstart).append("\n");
             sb.append(Lend).append(":\n");
             return;
         }
 
-        throw new IllegalStateException("Cmd não suportado: " + cmd.getClass().getSimpleName());
+        throw new IllegalStateException("Cmd não suportado: " + command.getClass().getSimpleName());
     }
 
-    private void genBlock(List<Cmd> cmds, StringBuilder sb) {
-        if (cmds == null) return;
-        for (Cmd c : cmds) genCmd(c, sb);
+    private void genBlock(List<Command> commands, StringBuilder sb) {
+        if (commands == null) return;
+        for (Command c : commands) genCmd(c, sb);
     }
 
     // ===================== Expressões =====================

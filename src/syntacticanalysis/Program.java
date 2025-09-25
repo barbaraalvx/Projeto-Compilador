@@ -1,9 +1,9 @@
 package syntacticanalysis;
 
-import syntacticanalysis.commands.AssignCmd;
-import syntacticanalysis.commands.Cmd;
-import syntacticanalysis.commands.IfCmd;
-import syntacticanalysis.commands.WhileCmd;
+import syntacticanalysis.commands.AssignCommand;
+import syntacticanalysis.commands.Command;
+import syntacticanalysis.commands.IfCommand;
+import syntacticanalysis.commands.WhileCommand;
 import syntacticanalysis.expression.BinaryOperation;
 import syntacticanalysis.expression.Expression;
 
@@ -12,15 +12,15 @@ import java.util.List;
 public class Program {
     private final List<Declaration> declarations;
     private final Expression finalExpression;
-    private final List<Cmd> commands;
+    private final List<Command> commands;
 
-    public Program(List<Declaration> decls, List<Cmd> cmds, Expression ret) {
+    public Program(List<Declaration> decls, List<Command> commands, Expression ret) {
         this.declarations = decls;
-        this.commands = cmds;
+        this.commands = commands;
         this.finalExpression = ret;
     }
 
-    public List<Cmd> getCommands() { return commands; }
+    public List<Command> getCommands() { return commands; }
     public List<Declaration> getDeclarations() { return declarations; }
     public Expression getFinalExpression() { return finalExpression; }
 
@@ -48,7 +48,7 @@ public class Program {
         if (!commands.isEmpty()) {
             System.out.println("├── Commands");
             for (int i = 0; i < commands.size(); i++) {
-                Cmd c = commands.get(i);
+                Command c = commands.get(i);
                 boolean lastCmd = (i == commands.size() - 1);
                 String branch = lastCmd ? "└── " : "├── ";
                 String childPrefix = lastCmd ? "    " : "│   ";
@@ -58,96 +58,79 @@ public class Program {
             System.out.println("├── Commands (none)");
         }
 
-        // 3) Return
         System.out.println("└── Return");
         printExpr(finalExpression, "    ", true);
     }
 
-    private void printCmd(Cmd cmd, String branch, String childPrefix) {
-        if (cmd instanceof AssignCmd a) {
-            System.out.println(branch + "Assign " + a.var);
-            printExpr(a.expr, childPrefix, true);
+    private void printCmd(Command command, String branch, String childPrefix) {
+        if (command instanceof AssignCommand(String var, Expression expr)) {
+            System.out.println(branch + "Assign " + var);
+            printExpr(expr, childPrefix, true);
 
-        } else if (cmd instanceof IfCmd i) {
+        } else if (command instanceof IfCommand(Expression cond, List<Command> thenPart, List<Command> elsePart)) {
             System.out.println(branch + "If");
             System.out.println(childPrefix + "├── Cond");
-            printExpr(i.cond, childPrefix + "│   ", true);
+            printExpr(cond, childPrefix + "│   ", true);
 
             System.out.println(childPrefix + "├── Then");
-            if (i.thenPart.isEmpty()) {
+            if (thenPart.isEmpty()) {
                 System.out.println(childPrefix + "│   (empty)");
             } else {
-                for (int k = 0; k < i.thenPart.size(); k++) {
-                    boolean last = (k == i.thenPart.size() - 1);
+                for (int k = 0; k < thenPart.size(); k++) {
+                    boolean last = (k == thenPart.size() - 1);
                     String b = last ? "└── " : "├── ";
                     String cp = last ? "    " : "│   ";
-                    printCmd(i.thenPart.get(k), childPrefix + "│   " + b,
+                    printCmd(thenPart.get(k), childPrefix + "│   " + b,
                             childPrefix + "│   " + cp);
                 }
             }
 
             System.out.println(childPrefix + "└── Else");
-            if (i.elsePart.isEmpty()) {
+            if (elsePart.isEmpty()) {
                 System.out.println(childPrefix + "    (empty)");
             } else {
-                for (int k = 0; k < i.elsePart.size(); k++) {
-                    boolean last = (k == i.elsePart.size() - 1);
+                for (int k = 0; k < elsePart.size(); k++) {
+                    boolean last = (k == elsePart.size() - 1);
                     String b = last ? "└── " : "├── ";
                     String cp = last ? "    " : "│   ";
-                    printCmd(i.elsePart.get(k), childPrefix + "    " + b,
+                    printCmd(elsePart.get(k), childPrefix + "    " + b,
                             childPrefix + "    " + cp);
                 }
             }
 
-        } else if (cmd instanceof WhileCmd w) {
+        } else if (command instanceof WhileCommand(Expression cond, List<Command> body)) {
             System.out.println(branch + "While");
             System.out.println(childPrefix + "├── Cond");
-            printExpr(w.cond, childPrefix + "│   ", true);
+            printExpr(cond, childPrefix + "│   ", true);
 
             System.out.println(childPrefix + "└── Body");
-            if (w.body.isEmpty()) {
+            if (body.isEmpty()) {
                 System.out.println(childPrefix + "    (empty)");
             } else {
-                for (int k = 0; k < w.body.size(); k++) {
-                    boolean last = (k == w.body.size() - 1);
+                for (int k = 0; k < body.size(); k++) {
+                    boolean last = (k == body.size() - 1);
                     String b = last ? "└── " : "├── ";
                     String cp = last ? "    " : "│   ";
-                    printCmd(w.body.get(k), childPrefix + "    " + b,
+                    printCmd(body.get(k), childPrefix + "    " + b,
                             childPrefix + "    " + cp);
                 }
             }
         }
     }
-    // --------- helpers para imprimir qualquer Expression como árvore ---------
-
     private void printExpr(Expression e, String prefix, boolean isLast) {
-        // Se for BinaryOperation, imprime o operador e desce pros filhos
-        if (e instanceof BinaryOperation bin) {
-            String branch = isLast ? "└── " : "├── ";
-            System.out.println(prefix + branch + bin.getOperator().getValor());
-            // filhos
-            String nextPrefix = prefix + (isLast ? "    " : "│   ");
-            // left (não-último)
-            printExprChild(bin.getLeft(),  nextPrefix, false);
-            // right (último)
-            printExprChild(bin.getRight(), nextPrefix, true);
-        } else {
-            // Folhas: Const, VariableReference, etc.
-            String branch = isLast ? "└── " : "├── ";
-            System.out.println(prefix + branch + e);
-        }
-    }
 
-    private void printExprChild(Expression e, String prefix, boolean isLast) {
         if (e instanceof BinaryOperation bin) {
             String branch = isLast ? "└── " : "├── ";
             System.out.println(prefix + branch + bin.getOperator().getValor());
             String nextPrefix = prefix + (isLast ? "    " : "│   ");
-            printExprChild(bin.getLeft(),  nextPrefix, false);
-            printExprChild(bin.getRight(), nextPrefix, true);
+            printExpr(bin.getLeft(),  nextPrefix, false);
+            printExpr(bin.getRight(), nextPrefix, true);
+
         } else {
+
             String branch = isLast ? "└── " : "├── ";
             System.out.println(prefix + branch + e);
+
         }
     }
 }
