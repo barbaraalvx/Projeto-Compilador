@@ -10,8 +10,13 @@ IMAGE_NAME="compilador-java"
 HOST_INPUT_DIR="$(cd "$INPUT_DIR" && (pwd -W 2>/dev/null || pwd))"
 HOST_ASM_DIR="$(cd "$ASM_DIR" && (pwd -W 2>/dev/null || pwd))"
 
-echo "Construindo imagem Docker..."
-docker build -t "$IMAGE_NAME" .   # 
+echo "Verificando imagem Docker..."
+if docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
+    echo "Imagem $IMAGE_NAME já existe, pulando construção..."
+else
+    echo "Construindo imagem Docker..."
+    docker build -t "$IMAGE_NAME" .
+fi 
 
 echo
 echo "Preparando runtime..."

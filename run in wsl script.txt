@@ -1,0 +1,3 @@
+wsl
+cd /mnt/c/Users/RJ\ INFO/Documents/Github/Compiladores
+./test.sh
