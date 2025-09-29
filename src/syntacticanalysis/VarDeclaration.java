@@ -11,11 +11,17 @@ public class VarDeclaration extends Declaration {
         this.expression = expression;
     }
 
-    public String getName() { return name; }
-    public Expression getExpression() { return expression; }
+    public String getName() {
+        return name;
+    }
+
+    public Expression getExpression() {
+        return expression;
+    }
 
     @Override
     public void printTree(String prefix) {
-        System.out.println(prefix + "Var " + name + " = " + expression);
+        System.out.println(prefix + "Var " + name + " =");
+        expression.printTree(prefix + "  ");
     }
 }

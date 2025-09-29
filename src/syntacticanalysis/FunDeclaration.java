@@ -5,48 +5,53 @@ import syntacticanalysis.commands.Command;
 
 public class FunDeclaration extends Declaration {
     private final String name;
-    private final List<String> parameters;
-    private final List<VarDeclaration> locals;   // vars locais
-    private final List<Command> commands;        // corpo da função
+    private final List<String> params;
+    private final List<VarDeclaration> locals;
+    private final List<Command> commands;
 
     public FunDeclaration(String name,
-                          List<String> parameters,
+                          List<String> params,
                           List<VarDeclaration> locals,
                           List<Command> commands) {
         this.name = name;
-        this.parameters = parameters;
+        this.params = params;
         this.locals = locals;
         this.commands = commands;
     }
 
-    public String getName() { return name; }
-    public List<String> getParameters() { return parameters; }
-    public List<VarDeclaration> getLocals() { return locals; }
-    public List<Command> getCommands() { return commands; }
+    public String getName() {
+        return name;
+    }
+
+    public List<String> getParameters() {
+        return params;
+    }
+
+    public List<VarDeclaration> getLocals() {
+        return locals;
+    }
+
+    public List<Command> getCommands() {
+        return commands;
+    }
 
     @Override
     public void printTree(String prefix) {
-        // Cabeçalho da função
-        System.out.println(prefix + "Fun " + name + "(" + String.join(", ", parameters) + ")");
+        String paramsStr = String.join(", ", params);
+        System.out.println(prefix + "Fun " + name + "(" + paramsStr + ")");
 
-        // Locals
-        if (locals != null && !locals.isEmpty()) {
+        if (!locals.isEmpty()) {
             System.out.println(prefix + "  Locals:");
             for (VarDeclaration v : locals) {
                 v.printTree(prefix + "    ");
             }
-        } else {
-            System.out.println(prefix + "  Locals (none)");
         }
 
-        // Body
-        if (commands != null && !commands.isEmpty()) {
+        if (!commands.isEmpty()) {
             System.out.println(prefix + "  Body:");
             for (Command c : commands) {
                 c.printTree(prefix + "    ");
             }
-        } else {
-            System.out.println(prefix + "  Body (empty)");
         }
     }
 }
