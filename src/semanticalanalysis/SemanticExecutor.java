@@ -159,7 +159,7 @@ public class SemanticExecutor {
             }
 
             Map<String,Integer> newLocals = new HashMap<>();
-            List<String> params = fun.getParameters(); // ✅ ajustado
+            List<String> params = fun.getParameters();
             for (int i = 0; i < params.size(); i++) {
                 newLocals.put(params.get(i), argVals.get(i));
             }
