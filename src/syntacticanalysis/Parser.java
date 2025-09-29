@@ -2,12 +2,8 @@ package syntacticanalysis;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
-import syntacticanalysis.commands.AssignCommand;
-import syntacticanalysis.commands.Command;
-import syntacticanalysis.commands.IfCommand;
-import syntacticanalysis.commands.WhileCommand;
+import syntacticanalysis.commands.*;
 import syntacticanalysis.exceptions.SyntaxException;
 import syntacticanalysis.expression.BinaryOperation;
 import syntacticanalysis.expression.Const;
@@ -15,6 +11,7 @@ import syntacticanalysis.expression.Expression;
 import lexicalanalysis.Position;
 import lexicalanalysis.Token;
 import lexicalanalysis.TypeEnum;
+import syntacticanalysis.expression.FunCall;
 
 public class Parser {
 
@@ -26,24 +23,19 @@ public class Parser {
         this.position = 0;
     }
 
-    // ===== utilitários de leitura =====
-    // olha o próximo sem consumir
     private Token lookNextToken() {
         return position < tokens.size() ? tokens.get(position) : null;
     }
 
-    // consome o próximo token
     private Token nextToken() {
         return position < tokens.size() ? tokens.get(position++) : null;
     }
 
-    // true se próximo token é do tipo t (não consome)
     private boolean peek(TypeEnum t) {
         Token tok = lookNextToken();
         return tok != null && tok.getType() == t;
     }
 
-    // consome e garante tipo esperado
     private Token expect(TypeEnum expected) throws SyntaxException {
         Token token = nextToken();
         if (token == null || token.getType() != expected) {
@@ -56,150 +48,160 @@ public class Parser {
         return token;
     }
 
-    // Sobrecarga de expect para mensagens de erro mais detalhadas (se quiser usar)
-    private Token expect(String expectedMsg, TypeEnum... possibleTypes) throws SyntaxException {
-        Token token = nextToken();
-        boolean matches = false;
-        if (token != null) {
-            for (TypeEnum t : possibleTypes) {
-                if (token.getType() == t) {
-                    matches = true;
-                    break;
-                }
-            }
-        }
-        if (!matches) {
-            throw new SyntaxException(
-                    token != null ? token.getPosition() : new Position(-1, -1, -1),
-                    possibleTypes.length > 0 ? possibleTypes[0] : null,
-                    token != null ? token.getType() : null
-            );
-        }
-        return token;
-    }
-
-    // ===== entrada principal (agora é a análise do programa) =====
     public Program parse() throws SyntaxException {
         return parseProgram();
     }
 
-    // <programa> ::= <decl>* '{' 'return' <exp> ';' '}'
     private Program parseProgram() throws SyntaxException {
         List<Declaration> declarations = new ArrayList<>();
-        while (peek(TypeEnum.IDENTIFICADOR)) {
+        while (peek(TypeEnum.VAR) || peek(TypeEnum.FUN)) {
             declarations.add(parseDeclaration());
         }
+
+        expect(TypeEnum.MAIN);
         expect(TypeEnum.LCHAVE);
 
-        List<Command> commands = parseCmdsUntilReturn();
+        List<Command> commands = new ArrayList<>();
+        while (!peek(TypeEnum.RCHAVE)) {
+            commands.add(parseCmd());
+        }
 
-        expect(TypeEnum.RETURN);
-        Expression result = parseExpC();
-        expect(TypeEnum.PONTO_VIRGULA);
         expect(TypeEnum.RCHAVE);
         expect(TypeEnum.EOF);
 
-        return new Program(declarations, commands, result);
+        return new Program(declarations, commands);
     }
 
-    // <decl> ::= <ident> '=' <exp> ';'
-    private Declaration parseDeclaration() throws SyntaxException {
-
+    private VarDeclaration parseVarDeclaration() throws SyntaxException {
+        expect(TypeEnum.VAR);
         Token identToken = expect(TypeEnum.IDENTIFICADOR);
         expect(TypeEnum.IGUAL);
         Expression expression = parseExpC();
         expect(TypeEnum.PONTO_VIRGULA);
-
-        return new Declaration(identToken.getLexeme(), expression);
+        return new VarDeclaration(identToken.getLexeme(), expression);
     }
 
-    // expC ::= expA ( (MENOR | MAIOR | IGUAL_IGUAL) expA )*
-    private Expression parseExpC() throws SyntaxException {
-        Expression left = parseExpA(); // já existente
+    private FunDeclaration parseFunDeclaration() throws SyntaxException {
+        expect(TypeEnum.FUN);
+        Token identToken = expect(TypeEnum.IDENTIFICADOR);
 
+        expect(TypeEnum.ABRE_PARENTESES);
+        List<String> params = new ArrayList<>();
+        if (!peek(TypeEnum.FECHA_PARENTESES)) {
+            params.add(expect(TypeEnum.IDENTIFICADOR).getLexeme());
+            while (peek(TypeEnum.VIRGULA)) {
+                nextToken();
+                params.add(expect(TypeEnum.IDENTIFICADOR).getLexeme());
+            }
+        }
+        expect(TypeEnum.FECHA_PARENTESES);
+
+        expect(TypeEnum.LCHAVE);
+
+        List<VarDeclaration> locals = new ArrayList<>();
+        while (peek(TypeEnum.VAR)) {
+            locals.add(parseVarDeclaration());
+        }
+
+        List<Command> body = new ArrayList<>();
+        while (!peek(TypeEnum.RCHAVE)) {
+            body.add(parseCmd());
+        }
+
+        expect(TypeEnum.RCHAVE);
+
+        return new FunDeclaration(identToken.getLexeme(), params, locals, body);
+
+    }
+
+    private Declaration parseDeclaration() throws SyntaxException {
+        if (peek(TypeEnum.VAR)) return parseVarDeclaration();
+        if (peek(TypeEnum.FUN)) return parseFunDeclaration();
+        throw new SyntaxException(lookNextToken().getPosition(), null, lookNextToken().getType());
+    }
+
+    // apenas <, >, ==
+    private Expression parseExpC() throws SyntaxException {
+        Expression left = parseExpA();
         while (peek(TypeEnum.MENOR) || peek(TypeEnum.MAIOR) || peek(TypeEnum.IGUALDADE)) {
             Token opTok = nextToken();
             Expression right = parseExpA();
-            TypeEnum op = opTok.getType(); // MENOR, MAIOR, IGUAL_IGUAL
-            left = new BinaryOperation(op, left, right);
+            left = new BinaryOperation(opTok.getType(), left, right);
         }
-
         return left;
     }
 
-    // <exp> ::= <exp_m> (('+' | '-') <exp_m>)*
     private Expression parseExpA() throws SyntaxException {
         Expression left = parseExpM();
-
         while (peek(TypeEnum.SOMA) || peek(TypeEnum.SUBTRACAO)) {
             Token opTok = nextToken();
             Expression right = parseExpM();
-            TypeEnum op = (opTok.getType() == TypeEnum.SOMA)
-                    ? TypeEnum.SOMA
-                    : TypeEnum.SUBTRACAO;
-            left = new BinaryOperation(op, left, right);
+            left = new BinaryOperation(opTok.getType(), left, right);
         }
-
         return left;
     }
 
-    // <exp_m> ::= <prim> (('*' | '/') <prim>)*
     private Expression parseExpM() throws SyntaxException {
         Expression left = parsePrim();
         while (peek(TypeEnum.MULTIPLICACAO) || peek(TypeEnum.DIVISAO)) {
             Token opTok = nextToken();
             Expression right = parsePrim();
-            TypeEnum op = (opTok.getType() == TypeEnum.MULTIPLICACAO)
-                    ? TypeEnum.MULTIPLICACAO
-                    : TypeEnum.DIVISAO;
-            left = new BinaryOperation(op, left, right);
+            left = new BinaryOperation(opTok.getType(), left, right);
         }
         return left;
     }
 
-    // <prim> ::= <num> | <ident> | '(' <exp> ')'
     private Expression parsePrim() throws SyntaxException {
         Token token = lookNextToken();
         if (token == null) {
             throw new SyntaxException(new Position(-1, -1, -1), null, null);
         }
-
         switch (token.getType()) {
             case DIGITO -> {
                 nextToken();
-                int value = Integer.parseInt(token.getLexeme());
-                return new Const(value);
+                return new Const(Integer.parseInt(token.getLexeme()));
             }
             case IDENTIFICADOR -> {
-                nextToken();
-                return new VariableReference(token.getLexeme());
+                Token id = nextToken();
+                if (peek(TypeEnum.ABRE_PARENTESES)) {
+                    nextToken();
+                    List<Expression> args = new ArrayList<>();
+                    if (!peek(TypeEnum.FECHA_PARENTESES)) {
+                        args.add(parseExpC());
+                        while (peek(TypeEnum.VIRGULA)) {
+                            nextToken();
+                            args.add(parseExpC());
+                        }
+                    }
+                    expect(TypeEnum.FECHA_PARENTESES);
+                    return new FunCall(id.getLexeme(), args);
+                } else {
+                    return new VariableReference(id.getLexeme());
+                }
             }
             case ABRE_PARENTESES -> {
                 nextToken();
-                Expression inner = parseExpC(); // <-- em vez de parseExpA()
+                Expression inner = parseExpC();
                 expect(TypeEnum.FECHA_PARENTESES);
                 return inner;
             }
-            default -> throw new SyntaxException(
-                    token.getPosition(),
-                    TypeEnum.DIGITO,
-                    token.getType()
-            );
+            default -> throw new SyntaxException(token.getPosition(), TypeEnum.DIGITO, token.getType());
         }
-    }
-
-    private List<Command> parseCmdsUntilReturn() throws SyntaxException {
-        List<Command> commands = new ArrayList<>();
-        while (!peek(TypeEnum.RETURN)) {
-            commands.add(parseCmd());
-        }
-        return commands;
     }
 
     private Command parseCmd() throws SyntaxException {
         if (peek(TypeEnum.IF)) return parseIf();
         if (peek(TypeEnum.WHILE)) return parseWhile();
-
+        if (peek(TypeEnum.RETURN)) {
+            nextToken();
+            Expression e = parseExpC();
+            expect(TypeEnum.PONTO_VIRGULA);
+            return new ReturnCommand(e);
+        }
+        if (peek(TypeEnum.VAR)) {
+            VarDeclaration vd = parseVarDeclaration();
+            return new VarDeclCommand(vd.getName(), vd.getExpression());
+        }
         Token id = expect(TypeEnum.IDENTIFICADOR);
         expect(TypeEnum.IGUAL);
         Expression e = parseExpC();
@@ -227,13 +229,9 @@ public class Parser {
         expect(TypeEnum.LCHAVE);
         List<Command> xs = new ArrayList<>();
         while (!peek(TypeEnum.RCHAVE)) {
-            if (peek(TypeEnum.RETURN)) {
-                throw new SyntaxException(Objects.requireNonNull(lookNextToken()).getPosition(), TypeEnum.IDENTIFICADOR, TypeEnum.RETURN);
-            }
             xs.add(parseCmd());
         }
         expect(TypeEnum.RCHAVE);
         return xs;
     }
-
 }

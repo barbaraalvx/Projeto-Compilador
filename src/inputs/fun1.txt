@@ -1,0 +1,9 @@
+fun dobro(n) {
+    return n * 2;
+}
+
+main {
+    var x = 7;
+    var y = dobro(x);
+    return y;
+}

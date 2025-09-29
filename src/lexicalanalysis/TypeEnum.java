@@ -20,7 +20,12 @@ public enum TypeEnum {
     WHILE("while"),
     MENOR("<"),
     MAIOR(">"),
-    IGUALDADE("==");
+    IGUALDADE("=="),
+    FUN("fun"),
+    VAR("var"),
+    MAIN("main"),
+    VIRGULA(",");
+
 
     private final String label;
 

@@ -1,8 +1,14 @@
 package syntacticanalysis.commands;
 
+import java.util.List;
 import syntacticanalysis.expression.Expression;
 
-import java.util.List;
-
 public record WhileCommand(Expression cond, List<Command> body) implements Command {
+    @Override
+    public void printTree(String prefix) {
+        System.out.println(prefix + "While (" + cond + ")");
+        if (body != null) {
+            for (Command c : body) c.printTree(prefix + "  ");
+        }
+    }
 }

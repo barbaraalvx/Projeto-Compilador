@@ -21,6 +21,11 @@ public class VariableReference extends Expression {
     }
 
     @Override
+    public String toTreeString() {
+        return name;
+    }
+
+    @Override
     public String toString() {
         return name;
     }

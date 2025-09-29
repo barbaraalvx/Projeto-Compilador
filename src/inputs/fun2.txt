@@ -1,0 +1,12 @@
+fun calcula(n) {
+    var a = n * 2;
+    var b = n + 5;
+    var c = n - 3;
+    return a + b + c;
+}
+
+main {
+    var x = 10;
+    var y = calcula(x);
+    return y;
+}

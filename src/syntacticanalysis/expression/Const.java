@@ -14,6 +14,11 @@ public class Const extends Expression {
     }
 
     @Override
+    public String toTreeString() {
+        return String.valueOf(value);
+    }
+
+    @Override
     public String toString() {
         return String.valueOf(value);
     }

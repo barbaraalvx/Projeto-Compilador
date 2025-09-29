@@ -32,6 +32,11 @@ public class BinaryOperation extends Expression {
 
     }
 
+    @Override
+    public String toTreeString() {
+        return "(" + leftExpression.toTreeString() + " " + operator.getValor() + " " + rightExpression.toTreeString() + ")";
+    }
+
     public TypeEnum getOperator() {
         return operator;
     }

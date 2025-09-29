@@ -1,3 +1,5 @@
 package syntacticanalysis.commands;
 
-sealed public interface Command permits IfCommand, WhileCommand, AssignCommand { }
+public sealed interface Command permits AssignCommand, IfCommand, ReturnCommand, VarDeclCommand, WhileCommand {
+    void printTree(String prefix);
+}

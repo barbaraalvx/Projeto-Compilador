@@ -108,6 +108,9 @@ public class Tokenizer {
                         case "if" -> tokens.add(new Token(TypeEnum.IF, lex, identifierPos));
                         case "else" -> tokens.add(new Token(TypeEnum.ELSE, lex, identifierPos));
                         case "while" -> tokens.add(new Token(TypeEnum.WHILE, lex, identifierPos));
+                        case "fun" -> tokens.add(new Token(TypeEnum.FUN, lex, identifierPos));
+                        case "var" -> tokens.add(new Token(TypeEnum.VAR, lex, identifierPos));
+                        case "main" -> tokens.add(new Token(TypeEnum.MAIN, lex, identifierPos));
                         default -> tokens.add(new Token(TypeEnum.IDENTIFICADOR, lex, identifierPos));
                     }
                 }
@@ -160,7 +163,7 @@ public class Tokenizer {
 
     private static boolean isSingleCharToken(char c) {
         return switch (c) {
-            case '(', ')', '+', '-', '*', '/', ';', '=', '{', '}', '<', '>' -> true;
+            case '(', ')', '+', '-', '*', '/', ';', '=', '{', '}', '<', '>', ',' -> true;
             default -> false;
         };
     }
@@ -179,6 +182,7 @@ public class Tokenizer {
             case '}' -> new Token(TypeEnum.RCHAVE, pos);
             case '<' -> new Token(TypeEnum.MENOR, pos);
             case '>' -> new Token(TypeEnum.MAIOR, pos);
+            case ',' -> new Token(TypeEnum.VIRGULA, pos);
             default -> throw new IllegalArgumentException("Token inesperado: " + c);
         };
     }
