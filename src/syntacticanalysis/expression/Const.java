@@ -14,15 +14,15 @@ public class Const extends Expression {
     }
 
     @Override
-    public String toTreeString() {
-        return String.valueOf(value);
+    public void printTree(String indent) {
+        System.out.println(indent + "Const " + value);
     }
 
     @Override
     public String toString() {
         return String.valueOf(value);
     }
-    
+
     public int getValor() {
         return value;
     }

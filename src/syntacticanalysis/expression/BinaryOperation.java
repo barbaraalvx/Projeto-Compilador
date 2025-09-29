@@ -32,11 +32,6 @@ public class BinaryOperation extends Expression {
 
     }
 
-    @Override
-    public String toTreeString() {
-        return "(" + leftExpression.toTreeString() + " " + operator.getValor() + " " + rightExpression.toTreeString() + ")";
-    }
-
     public TypeEnum getOperator() {
         return operator;
     }
@@ -77,7 +72,10 @@ public class BinaryOperation extends Expression {
         }
     }
 
-    public void printTree(String prefix) {
-        printTree(prefix, true);
+    @Override
+    public void printTree(String indent) {
+        System.out.println(indent + "BinaryOp " + operator);
+        leftExpression.printTree(indent + "  L- ");
+        rightExpression.printTree(indent + "  R- ");
     }
 }

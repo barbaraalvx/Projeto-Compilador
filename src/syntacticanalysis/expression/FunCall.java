@@ -35,9 +35,10 @@ public class FunCall extends Expression {
     }
 
     @Override
-    public String toTreeString() {
-        return name + "(" + args.stream()
-                .map(Expression::toTreeString)
-                .collect(Collectors.joining(", ")) + ")";
+    public void printTree(String indent) {
+        System.out.println(indent + "Call " + name);
+        for (int i = 0; i < args.size(); i++) {
+            args.get(i).printTree(indent + "  Arg" + i + ": ");
+        }
     }
 }

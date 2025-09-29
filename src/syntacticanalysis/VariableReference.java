@@ -21,8 +21,8 @@ public class VariableReference extends Expression {
     }
 
     @Override
-    public String toTreeString() {
-        return name;
+    public void printTree(String indent) {
+        System.out.println(indent + "VarRef " + name);
     }
 
     @Override
