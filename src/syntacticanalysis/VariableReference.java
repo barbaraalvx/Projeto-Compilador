@@ -14,14 +14,7 @@ public class VariableReference extends Expression {
     }
 
     @Override
-    public int avaliar() {
-        throw new UnsupportedOperationException(
-            "VariableReference '" + name + "' precisa de ambiente para avaliação."
-        );
-    }
-
-    @Override
-    public String toString() {
-        return name;
+    public void printTree(String prefix) {
+        System.out.println(prefix + "VarRef " + name);
     }
 }

@@ -1,7 +1,7 @@
-i = 0;
-n = 5;
-soma = 0;
-{
+main {
+  var i = 0;
+  var n = 5;
+  var soma = 0;
   while i == n {
     soma = soma + i;
     i = i + 1;

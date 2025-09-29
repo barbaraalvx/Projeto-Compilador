@@ -1,0 +1,16 @@
+fun inc(n) {
+    return n + 1;
+}
+
+fun twice(n) {
+    return n * 2;
+}
+
+main {
+    var x = 10;
+    var y = twice(inc(x));
+    return y;
+}
+#EXPECT: 22#
+
+

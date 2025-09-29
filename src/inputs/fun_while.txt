@@ -1,0 +1,15 @@
+fun somaN(n) {
+    var total = 0;
+    var i = 1;
+    while i < n {
+        total = total + i;
+        i = i + 1;
+    }
+    return total;
+}
+
+main {
+    var x = 5;
+    return somaN(x);
+}
+#EXPECT: 10#

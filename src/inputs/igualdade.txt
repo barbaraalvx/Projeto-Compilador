@@ -1,6 +1,6 @@
-x = 2;
-y = 2;
-{
+main {
+  var x = 2;
+  var y = 2;
   if x == y {
     x = 10;
   } else {

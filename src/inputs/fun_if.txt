@@ -1,0 +1,13 @@
+fun teste(n) {
+    if n > 0 {
+        return 1;
+    } else {
+        return 2;
+    }
+}
+
+main {
+    var x = 5;
+    return teste(x);
+}
+#EXPECT: 1#

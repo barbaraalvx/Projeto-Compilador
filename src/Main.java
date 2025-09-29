@@ -6,8 +6,6 @@ import semanticalanalysis.exceptions.SemanticException;
 import syntacticanalysis.Parser;
 import syntacticanalysis.Program;
 import syntacticanalysis.exceptions.SyntaxException;
-import syntacticanalysis.expression.BinaryOperation;
-import syntacticanalysis.expression.Expression;
 import utils.FileReaderUtil;
 import utils.FileWriterUtil;
 
@@ -25,7 +23,6 @@ public class Main {
     static Parser parser;
     static Program parsedProgram;
     static List<Token> tokenList;
-    static Expression returnExpression;
 
     // Analisadores
     final static SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
@@ -57,34 +54,17 @@ public class Main {
             parser = new Parser(tokenList);
             parsedProgram = parser.parse();
             parsedProgram.printTree();
-            returnExpression = parsedProgram.getFinalExpression();
-            System.out.println("Expressão de retorno (original): " + returnExpression);
-
-            if (returnExpression instanceof BinaryOperation binOp) {
-                System.out.println("Árvore do retorno:");
-                binOp.printTree();
-            }
 
             try {
-
                 printSemanticAnalysisHeader();
                 semanticAnalyzer.analyze(parsedProgram);
                 System.out.println("Análise semântica concluída sem erros.");
-
             } catch (SemanticException semanticException) {
-
                 System.err.println("Erro semântico: " + semanticException.getMessage());
                 System.exit(1);
-
             }
 
             SemanticExecutor.ExecResult executionResult = semanticExecutor.execute(parsedProgram);
-
-            if (executionResult.substitutedFinal() instanceof BinaryOperation bin2) {
-                bin2.printTree();
-            } else {
-                System.out.println("AST (final): " + executionResult.substitutedFinal());
-            }
 
             printEnvironmentAndResult(executionResult);
             printCodeGenerationHeader();
@@ -94,10 +74,8 @@ public class Main {
             FileWriterUtil.writeToFile(assemblyCode, outputFileName);
 
         } catch (SyntaxException e) {
-
             System.err.println("Erro na análise sintática:" + e.getMessage());
             System.exit(1);
-
         }
     }
 
@@ -132,7 +110,4 @@ public class Main {
         int i = name.lastIndexOf('.');
         return (i > 0) ? name.substring(0, i) : name;
     }
-
-
 }
-

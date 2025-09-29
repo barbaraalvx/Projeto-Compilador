@@ -3,82 +3,113 @@ package semanticalanalysis;
 import java.util.*;
 import syntacticanalysis.*;
 import semanticalanalysis.exceptions.SemanticException;
-import syntacticanalysis.commands.AssignCommand;
-import syntacticanalysis.commands.Command;
-import syntacticanalysis.commands.IfCommand;
-import syntacticanalysis.commands.WhileCommand;
-import syntacticanalysis.expression.BinaryOperation;
-import syntacticanalysis.expression.Const;
-import syntacticanalysis.expression.Expression;
+import syntacticanalysis.commands.*;
+import syntacticanalysis.expression.*;
 
+/**
+ * Executor semântico para a linguagem Fun.
+ * Suporta variáveis globais, funções com parâmetros, variáveis locais e recursão.
+ */
 public class SemanticExecutor {
+    private final Map<String,Integer> globals = new LinkedHashMap<>();
+    private final Map<String,FunDeclaration> functions = new HashMap<>();
 
-    public record ExecResult(Map<String, Integer> env, Expression substitutedFinal, int value) {
-    }
+    public record ExecResult(Map<String,Integer> globals, int value) {}
 
     public ExecResult execute(Program program) {
-        Map<String, Integer> env = new LinkedHashMap<>();
-
-        // 1) declarações -> inicializam o ambiente
+        // 1) registrar funções
         for (Declaration d : program.getDeclarations()) {
-            int v = eval(d.getExpression(), env);
-            env.put(d.getVariableName(), v);
+            if (d instanceof FunDeclaration f) {
+                functions.put(f.getName(), f);
+            }
         }
 
-        // 2) comandos -> aplicam efeitos (assign/if/while)
-        for (Command c : program.getCommands()) {
-            exec(c, env);
+        // 2) inicializar variáveis globais
+        for (Declaration d : program.getDeclarations()) {
+            if (d instanceof VarDeclaration v) {
+                int val = eval(v.getExpression(), globals, null);
+                globals.put(v.getName(), val);
+            }
         }
 
-        // 3) retorno -> agora sim, com env atualizado
-        Expression original = program.getFinalExpression();
-        Expression substituted = substitute(original, env); // só para exibir árvore sem vars
-        int value = eval(original, env);                    // avalia com o ambiente atual
+        // 3) executar corpo do main
+        int value = 0;
+        try {
+            for (Command c : program.getCommands()) {
+                exec(c, globals, null);
+            }
+        } catch (ReturnValue r) {
+            value = r.value();
+        }
 
-        return new ExecResult(env, substituted, value);
+        return new ExecResult(globals, value);
     }
 
     // ===== execução de comandos =====
-    private void exec(Command c, Map<String, Integer> env) {
-        if (c instanceof AssignCommand(String var, Expression expression)) {
-            int v = eval(expression, env);
-            env.put(var, v);
+    private void exec(Command c, Map<String,Integer> globals, Map<String,Integer> locals) {
+        if (c instanceof AssignCommand a) {
+            int val = eval(a.expr(), globals, locals);
+            String name = a.var();
+            if (locals != null && locals.containsKey(name)) {
+                locals.put(name, val);
+            } else if (globals.containsKey(name)) {
+                globals.put(name, val);
+            } else {
+                throw new SemanticException("Variável não declarada: " + name);
+            }
+            return;
+        }
+
+        if (c instanceof VarDeclCommand v) {
+            int val = eval(v.expr(), globals, locals);
+            if (locals != null) {
+                locals.put(v.name(), val);
+            } else {
+                globals.put(v.name(), val);
+            }
             return;
         }
 
         if (c instanceof IfCommand i) {
-            int cond = eval(i.cond(), env);
+            int cond = eval(i.cond(), globals, locals);
             List<Command> branch = (cond != 0) ? i.thenPart() : i.elsePart();
-            for (Command cc : branch) exec(cc, env);
+            for (Command cc : branch) exec(cc, globals, locals);
             return;
         }
 
-        if (c instanceof WhileCommand(Expression cond, List<Command> body)) {
-            while (eval(cond, env) != 0) {
-                for (Command cc : body) exec(cc, env);
+        if (c instanceof WhileCommand w) {
+            while (eval(w.cond(), globals, locals) != 0) {
+                for (Command cc : w.body()) exec(cc, globals, locals);
             }
             return;
         }
 
-        throw new IllegalStateException("Tipo de comando desconhecido: " + c.getClass());
+        if (c instanceof ReturnCommand r) {
+            // interrompe execução e devolve valor
+            throw new ReturnValue(eval(r.expr(), globals, locals));
+        }
+
+        throw new IllegalStateException("Comando desconhecido: " + c.getClass());
     }
 
-    // ===== avaliador de expressões =====
-    private int eval(Expression expression, Map<String, Integer> env) {
-        if (expression instanceof Const c) {
-            return c.getValor();
-        }
-        if (expression instanceof VariableReference v) {
-            Integer val = env.get(v.getName());
-            if (val == null) {
-                throw new SemanticException("Variável não declarada/inicializada: " + v.getName());
+    // ===== avaliação de expressões =====
+    private int eval(Expression e, Map<String,Integer> globals, Map<String,Integer> locals) {
+        if (e instanceof Const c) return c.getValor();
+
+        if (e instanceof VariableReference v) {
+            String name = v.getName();
+            if (locals != null && locals.containsKey(name)) {
+                return locals.get(name);
+            } else if (globals.containsKey(name)) {
+                return globals.get(name);
             }
-            return val;
+            throw new SemanticException("Variável não declarada/inicializada: " + name);
         }
-        if (expression instanceof BinaryOperation binaryOperation) {
-            int a = eval(binaryOperation.getLeft(), env);
-            int c = eval(binaryOperation.getRight(), env);
-            return switch (binaryOperation.getOperator()) {
+
+        if (e instanceof BinaryOperation b) {
+            int a = eval(b.getLeft(), globals, locals);
+            int c = eval(b.getRight(), globals, locals);
+            return switch (b.getOperator()) {
                 case SOMA -> a + c;
                 case SUBTRACAO -> a - c;
                 case MULTIPLICACAO -> a * c;
@@ -86,30 +117,49 @@ public class SemanticExecutor {
                 case MENOR -> (a < c) ? 1 : 0;
                 case MAIOR -> (a > c) ? 1 : 0;
                 case IGUALDADE -> (a == c) ? 1 : 0;
-                default -> throw new IllegalStateException("Operador não suportado: " + binaryOperation.getOperator());
+                default -> throw new IllegalStateException("Operador não suportado: " + b.getOperator());
             };
         }
-        throw new IllegalStateException("Tipo de expressão desconhecido: " + expression.getClass());
+
+        if (e instanceof FunCall call) {
+            FunDeclaration fun = functions.get(call.getName());
+            if (fun == null) throw new SemanticException("Função não declarada: " + call.getName());
+
+            List<Integer> argVals = new ArrayList<>();
+            for (Expression arg : call.getArgs()) {
+                argVals.add(eval(arg, globals, locals));
+            }
+
+            Map<String,Integer> newLocals = new HashMap<>();
+            List<String> params = fun.getParameters(); // ✅ ajustado
+            for (int i = 0; i < params.size(); i++) {
+                newLocals.put(params.get(i), argVals.get(i));
+            }
+
+            for (VarDeclaration v : fun.getLocals()) {
+                int val = eval(v.getExpression(), globals, newLocals);
+                newLocals.put(v.getName(), val);
+            }
+
+            int ret = 0;
+            try {
+                for (Command c2 : fun.getCommands()) {
+                    exec(c2, globals, newLocals);
+                }
+            } catch (ReturnValue r) {
+                ret = r.value();
+            }
+
+            return ret;
+        }
+
+        throw new IllegalStateException("Expressão desconhecida: " + e.getClass());
     }
 
-    // ===== substituição (para exibir AST sem variáveis) =====
-    private Expression substitute(Expression e, Map<String, Integer> env) {
-        if (e instanceof Const c) return c;
-
-        if (e instanceof VariableReference v) {
-            Integer val = env.get(v.getName());
-            if (val == null) {
-                throw new SemanticException("Variável não declarada/inicializada: " + v.getName());
-            }
-            return new Const(val);
-        }
-
-        if (e instanceof BinaryOperation b) {
-            Expression left  = substitute(b.getLeft(), env);
-            Expression right = substitute(b.getRight(), env);
-            return new BinaryOperation(b.getOperator(), left, right);
-        }
-
-        throw new IllegalStateException("Tipo de expressão desconhecido: " + e.getClass());
+    // ===== exceção especial para retorno =====
+    private static class ReturnValue extends RuntimeException {
+        private final int value;
+        public ReturnValue(int value) { this.value = value; }
+        public int value() { return value; }
     }
 }

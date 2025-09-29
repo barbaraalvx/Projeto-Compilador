@@ -1,5 +1,5 @@
 package syntacticanalysis.expression;
 
 public abstract class Expression {
-    public abstract int avaliar();
+    public abstract void printTree(String prefix);
 }
