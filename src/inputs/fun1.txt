@@ -7,3 +7,4 @@ main {
     var y = dobro(x);
     return y;
 }
+#EXPECT: 14#

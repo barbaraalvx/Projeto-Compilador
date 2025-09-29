@@ -10,3 +10,4 @@ main {
     var y = calcula(x);
     return y;
 }
+#EXPECT: 42#
