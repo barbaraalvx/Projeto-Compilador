@@ -203,6 +203,16 @@ public class Parser {
             return new VarDeclCommand(vd.getName(), vd.getExpression());
         }
         Token id = expect(TypeEnum.IDENTIFICADOR);
+        
+        // Verifica se é um operador composto
+        if (peek(TypeEnum.ATRIB_SOMA) || peek(TypeEnum.ATRIB_SUBTRACAO) || 
+            peek(TypeEnum.ATRIB_MULTIPLICACAO) || peek(TypeEnum.ATRIB_DIVISAO)) {
+            Token opToken = nextToken();
+            Expression e = parseExpC();
+            expect(TypeEnum.PONTO_VIRGULA);
+            return new CompoundAssignCommand(id.getLexeme(), opToken.getType(), e);
+        }
+        
         expect(TypeEnum.IGUAL);
         Expression e = parseExpC();
         expect(TypeEnum.PONTO_VIRGULA);

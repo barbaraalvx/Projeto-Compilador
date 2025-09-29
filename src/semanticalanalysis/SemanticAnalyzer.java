@@ -86,6 +86,16 @@ public class SemanticAnalyzer {
             return;
         }
 
+        if (c instanceof syntacticanalysis.commands.CompoundAssignCommand ca) {
+            String name = ca.var();
+            boolean isLocal = locals != null && locals.contains(name);
+            if (!isLocal && !globals.isDeclared(name)) {
+                throw new SemanticException("Variável não declarada: " + name);
+            }
+            checkExpression(ca.expr(), locals);
+            return;
+        }
+
         if (c instanceof ReturnCommand r) {
             checkExpression(r.expr(), locals);
             return;

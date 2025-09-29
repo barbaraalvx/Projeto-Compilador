@@ -60,6 +60,34 @@ public class SemanticExecutor {
             return;
         }
 
+        if (c instanceof CompoundAssignCommand ca) {
+            String name = ca.var();
+            int currentVal;
+            if (locals != null && locals.containsKey(name)) {
+                currentVal = locals.get(name);
+            } else if (globals.containsKey(name)) {
+                currentVal = globals.get(name);
+            } else {
+                throw new SemanticException("Variável não declarada: " + name);
+            }
+            
+            int exprVal = eval(ca.expr(), globals, locals);
+            int newVal = switch (ca.operator()) {
+                case ATRIB_SOMA -> currentVal + exprVal;
+                case ATRIB_SUBTRACAO -> currentVal - exprVal;
+                case ATRIB_MULTIPLICACAO -> currentVal * exprVal;
+                case ATRIB_DIVISAO -> currentVal / exprVal;
+                default -> throw new SemanticException("Operador composto não suportado: " + ca.operator());
+            };
+            
+            if (locals != null && locals.containsKey(name)) {
+                locals.put(name, newVal);
+            } else {
+                globals.put(name, newVal);
+            }
+            return;
+        }
+
         if (c instanceof VarDeclCommand v) {
             int val = eval(v.expr(), globals, locals);
             if (locals != null) {

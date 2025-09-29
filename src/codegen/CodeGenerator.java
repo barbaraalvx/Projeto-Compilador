@@ -125,6 +125,30 @@ public class CodeGenerator {
             return;
         }
 
+        if (command instanceof CompoundAssignCommand ca) {
+            // Carrega o valor atual da variável
+            sb.append("    mov ").append(resolveSymbolName(ca.var())).append(", %rax\n");
+            sb.append("    push %rax\n");
+            
+            // Gera a expressão do lado direito
+            genExpr(ca.expr(), sb);
+            sb.append("    pop %rbx\n");
+            
+            // Aplica a operação baseada no operador
+            String op = ca.operator().getValor();
+            switch (op) {
+                case "=+" -> sb.append("    add %rbx, %rax\n");
+                case "=-" -> sb.append("    mov %rax, %rcx\n    mov %rbx, %rax\n    sub %rcx, %rax\n");
+                case "=*" -> sb.append("    imul %rbx, %rax\n");
+                case "=/" -> sb.append("    mov %rax, %rcx\n    mov %rbx, %rax\n    cqo\n    idiv %rcx\n");
+                default -> throw new IllegalStateException("Operador composto não suportado: " + op);
+            }
+            
+            // Armazena o resultado de volta na variável
+            sb.append("    mov %rax, ").append(resolveSymbolName(ca.var())).append("\n");
+            return;
+        }
+
         if (command instanceof VarDeclCommand v) {
             genExpr(v.expr(), sb);
             sb.append("    mov %rax, ").append(resolveSymbolName(v.name())).append("\n");

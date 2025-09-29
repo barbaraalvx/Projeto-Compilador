@@ -64,17 +64,46 @@ public class Tokenizer {
 
             // ... dentro do while, depois de calcular 'c' e antes de isSingleCharToken(c)
             if (c == '=') {
-                // olha próximo char
-                if ((index + 1) < content.length() && content.charAt(index + 1) == '=') {
+                // olha próximo char para operadores compostos
+                if ((index + 1) < content.length()) {
+                    char nextChar = content.charAt(index + 1);
                     if (!isComment) {
                         Position pos = new Position(index, row, column);
-                        tokens.add(new Token(TypeEnum.IGUALDADE, "==", pos));
+                        switch (nextChar) {
+                            case '+' -> {
+                                tokens.add(new Token(TypeEnum.ATRIB_SOMA, "=+", pos));
+                                index += 2;
+                                column += 2;
+                                continue;
+                            }
+                            case '-' -> {
+                                tokens.add(new Token(TypeEnum.ATRIB_SUBTRACAO, "=-", pos));
+                                index += 2;
+                                column += 2;
+                                continue;
+                            }
+                            case '*' -> {
+                                tokens.add(new Token(TypeEnum.ATRIB_MULTIPLICACAO, "=*", pos));
+                                index += 2;
+                                column += 2;
+                                continue;
+                            }
+                            case '/' -> {
+                                tokens.add(new Token(TypeEnum.ATRIB_DIVISAO, "=/", pos));
+                                index += 2;
+                                column += 2;
+                                continue;
+                            }
+                            case '=' -> {
+                                tokens.add(new Token(TypeEnum.IGUALDADE, "==", pos));
+                                index += 2;
+                                column += 2;
+                                continue;
+                            }
+                        }
                     }
-                    index += 2;
-                    column += 2;
-                    continue;
                 }
-                // se não for '==', cai no fluxo de 1 char: '=' (atribuição/declaração)
+                // se não for operador composto, cai no fluxo de 1 char: '=' (atribuição/declaração)
             }
 
             // Caso seja um caracter sozinho ( ) + - * /, usa a função addSingleChar e aumenta a posição

@@ -24,7 +24,11 @@ public enum TypeEnum {
     FUN("fun"),
     VAR("var"),
     MAIN("main"),
-    VIRGULA(",");
+    VIRGULA(","),
+    ATRIB_SOMA("=+"),
+    ATRIB_SUBTRACAO("=-"),
+    ATRIB_MULTIPLICACAO("=*"),
+    ATRIB_DIVISAO("=/");
 
 
     private final String label;
