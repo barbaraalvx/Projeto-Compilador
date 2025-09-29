@@ -1,4 +1,4 @@
-# Compiladores – Atividade 09 – Comandos
+# Compiladores – Atividade 10 - Linguagem Imperativa com Funções
 
 ### Alunos:
 - Bárbara Geovanna Alves Cavalcante - 20220055021
@@ -7,62 +7,69 @@
 
 --- 
 
-## Descrição:
+## Descrição
 
-Este projeto implementa um compilador para uma linguagem de programação imperativa simples, desenvolvido na disciplina de Construção de Compiladores I.
+Este projeto implementa um compilador para uma linguagem imperativa simples com suporte a funções, desenvolvido na disciplina de Construção de Compiladores I.
 
-A linguagem suporta:
-- **Declaração de variáveis** com inicialização
-- **Comandos de atribuição** (variável = expressão)
-- **Estruturas de controle**:
-  - `if-else` com condições
-  - `while` para loops
-- **Expressões aritméticas** com operadores: `+`, `-`, `*`, `/`
-- **Operadores de comparação**: `==`, `<`, `>`
-- **Comando `return`** para retornar valores
+Linguagem – recursos suportados:
+- **Programa principal em `main { ... }`** com declarações via `var` e um `return` ao final
+- **Funções** com parâmetros: `fun nome(p1, p2, ...) { ... }` e retorno via `return`
+- **Declarações de variáveis** com inicialização: `var x = expressão;`
+- **Atribuição**: `x = expressão;`
+- **Estruturas de controle**: `if ... else ...`, `while ... { ... }`
+- **Expressões aritméticas**: `+`, `-`, `*`, `/` (inteiros)
+- **Comparações**: `==`, `<`, `>` (retornam 0/1)
+- **Chamadas de função** com até 6 argumentos (convenção interna adotada)
+- **Recursão** suportada (pilha de chamadas gerenciada corretamente)
 
-### Sintaxe da Linguagem:
+### Sintaxe da Linguagem
 
 ```javascript
-// Declarações de variáveis
-variavel = expressao;
+// Declaração de função (opcional)
+fun soma(a, b) {
+  return a + b;
+}
 
-// Bloco de comandos
-{
-  // Comandos de atribuição
-  variavel = expressao;
-  
-  // Estrutura condicional
-  if condicao {
-    comandos;
-  } else {
-    comandos;
-  }
-  
-  // Loop
-  while condicao {
-    comandos;
-  }
-  
-  // Retorno
-  return expressao;
+// Programa principal (obrigatório)
+main {
+  var x = 10;
+  var y = 32;
+  return soma(x, y);
 }
 ```
 
-### Exemplo de programa:
+### Exemplos rápidos
 
 ```javascript
-x = 2;
-y = 2;
-{
+// If/else
+main {
+  var x = 2;
+  var y = 2;
   if x == y {
     x = 10;
   } else {
     x = 5;
   }
-  return x;
+  return x; // 10
 }
-// Resultado: 10
+```
+
+```javascript
+// While e chamada de função
+fun dobro(n) { return n * 2; }
+main {
+  var x = 7;
+  var y = dobro(x);
+  return y; // 14
+}
+```
+
+```javascript
+// Recursão
+fun fact(n) {
+  if n == 0 { return 1; } else { return n * fact(n - 1); }
+}
+main { var x = 5; return fact(x); } // 120
 ```
 
 O projeto também inclui execução completa do Assembly:
@@ -81,7 +88,7 @@ src/
 ├── utils/          # Leitura e escrita de arquivos
 └── Main.java       # Entrada principal do compilador
 ```
-## Como executar:
+## Como executar
 
 ### 1. Compilação e execução via Docker
 #### 1.1 Construir a imagem
@@ -89,22 +96,22 @@ src/
 docker build -t compilador-java .
 ```
 
-#### 1.2. Executar um teste com arquivo .txt
+#### 1.2 Executar um teste com arquivo .txt
 ```bash
 docker run --rm -v "$(pwd -W)/src/inputs:/app/inputs" compilador-java inputs/{exemplo}.txt
 ```
 
-### 2. Rodar todos os testes automaticamente:
+### 2. Rodar todos os testes automaticamente
 
 - O projeto inclui scripts que executam todos os arquivos .txt da pasta src/inputs dentro do contêiner.
 
-#### Executar no Linux/Git Bash/WSL:
+#### Executar no Linux/Git Bash/WSL
 ```bash 
 ./test.sh                    # Testes básicos (sem asserções)
 ./test_with_assertions.sh    # Testes com validação de resultados
 ```
 
-#### Executar no Windows PowerShell:
+#### Executar no Windows PowerShell
 ```powershell
 .\test.ps1                   # Versão PowerShell para Windows
 ```
@@ -120,7 +127,7 @@ docker run --rm -v "$(pwd -W)/src/inputs:/app/inputs" compilador-java inputs/{ex
 
 - O projeto também inclui um script que executa um arquivo .txt da pasta src/inputs.
 
-#### Executar no Linux/Git Bash/WSL:
+#### Executar no Linux/Git Bash/WSL
 ```bash 
 ./run.sh saida_{exemplo}.s
 ```
@@ -150,18 +157,18 @@ ld saida_{exemplo}.o runtime.o -o exec_{exemplo}
 
 Os arquivos de teste demonstram diferentes aspectos da linguagem:
 
-### Testes de Estruturas de Controle:
+### Testes de Estruturas de Controle
 - **igualdade.txt**: Testa estrutura `if-else` com comparação de igualdade
 - **condicaofalsa.txt**: Testa loop `while` com condição falsa (nunca executa)
 - **contagem.txt**: Testa loop `while` com decremento
 - **somaenunciado.txt**: Testa loop `while` com soma acumulativa
 
-### Testes de Algoritmos:
+### Testes de Algoritmos
 - **mdc.txt**: Implementa algoritmo de Euclides para máximo divisor comum
 - **delta.txt**: Calcula discriminante de equação quadrática com estrutura condicional
 - **parenteses.txt**: Testa expressões aritméticas complexas com parênteses
 
-### Resultados Esperados:
+### Resultados Esperados
 Cada teste possui um arquivo `.expected` com o resultado correto:
 - `igualdade.expected`: 10
 - `condicaofalsa.expected`: 0  
@@ -171,7 +178,18 @@ Cada teste possui um arquivo `.expected` com o resultado correto:
 - `delta.expected`: 8
 - `parenteses.expected`: 17
 
-## Requisitos:
+### Testes de Funções
+- `fun1.txt` / `fun1.expected`: Função simples `dobro`
+- `fun_if.txt` / `fun_if.expected`: Função com `if-else`
+- `fun_while.txt` / `fun_while.expected`: Função com `while`
+- `fun2.txt` / `fun2.expected`: Função com variáveis locais e soma
+- `fun_add2.txt` / `fun_add2.expected`: Função que incrementa
+- `fun_nested.txt` / `fun_nested.expected`: Composição de chamadas
+- `fun_rec_fact.txt`: Recursão (fatorial) – esperado 120
+
+Obs.: arquivos `.expected` são usados no script `test_with_assertions.sh`.
+
+## Requisitos
 
 - Docker Desktop instalado e rodando
 - Terminal compatível com Bash e binutils (as/ld)
@@ -179,7 +197,7 @@ Cada teste possui um arquivo `.expected` com o resultado correto:
 
 ## Observações finais
 
-### Pipeline de Compilação:
+### Pipeline de Compilação
 - **Análise Léxica**: Tokenização do código fonte
 - **Análise Sintática**: Construção da AST (Abstract Syntax Tree)
 - **Análise Semântica**: Verificação de tipos e declarações
@@ -188,19 +206,19 @@ Cada teste possui um arquivo `.expected` com o resultado correto:
 - **Montagem e Linkagem**: Geração de executável
 - **Execução**: Teste do programa final
 
-### Sistema de Testes:
+### Sistema de Testes
 - **test.sh**: Testes básicos (smoke tests)
 - **test_with_assertions.sh**: Testes com validação de resultados
 - **test.ps1**: Versão PowerShell (com limitações no Windows)
 - **Arquivos .expected**: Resultados esperados para cada teste
 
-### Compatibilidade:
+### Compatibilidade
 - **WSL (Recomendado)**: Máxima compatibilidade com ferramentas Unix
 - **Git Bash**: Alternativa para Windows
 - **PowerShell**: Limitado por problemas de execução de binários
 - **Docker**: Ambiente isolado e portável
 
-### Validação:
+### Validação
 - O sistema valida tanto a **compilação bem-sucedida** quanto a **correção dos resultados**
 - Cada teste possui resultado esperado documentado
 - Falhas são categorizadas: compilação, montagem, linkagem ou resultado incorreto

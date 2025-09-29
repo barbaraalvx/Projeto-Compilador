@@ -1,0 +1,12 @@
+fun add2(n) {
+    return n + 2;
+}
+
+main {
+    var x = 40;
+    var y = add2(x);
+    return y;
+}
+#EXPECT: 42#
+
+

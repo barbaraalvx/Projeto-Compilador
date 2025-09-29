@@ -5,6 +5,8 @@ import semanticalanalysis.exceptions.SemanticException;
 import syntacticanalysis.commands.AssignCommand;
 import syntacticanalysis.commands.Command;
 import syntacticanalysis.commands.IfCommand;
+import syntacticanalysis.commands.ReturnCommand;
+import syntacticanalysis.commands.VarDeclCommand;
 import syntacticanalysis.commands.WhileCommand;
 import syntacticanalysis.expression.BinaryOperation;
 import syntacticanalysis.expression.Const;
@@ -63,6 +65,17 @@ public class SemanticAnalyzer {
     }
 
     private void checkCommand(Command c, Set<String> locals) {
+        if (c instanceof VarDeclCommand v) {
+            // Declaração de variável
+            checkExpression(v.expr(), locals);
+            if (locals != null) {
+                locals.add(v.name());
+            } else {
+                globals.declare(v.name());
+            }
+            return;
+        }
+
         if (c instanceof AssignCommand a) {
             String name = a.var();
             boolean isLocal = locals != null && locals.contains(name);
@@ -70,15 +83,25 @@ public class SemanticAnalyzer {
                 throw new SemanticException("Variável não declarada: " + name);
             }
             checkExpression(a.expr(), locals);
+            return;
         }
-        else if (c instanceof IfCommand i) {
+
+        if (c instanceof ReturnCommand r) {
+            checkExpression(r.expr(), locals);
+            return;
+        }
+
+        if (c instanceof IfCommand i) {
             checkExpression(i.cond(), locals);
             for (Command cc : i.thenPart()) checkCommand(cc, locals);
             for (Command cc : i.elsePart()) checkCommand(cc, locals);
+            return;
         }
-        else if (c instanceof WhileCommand w) {
+
+        if (c instanceof WhileCommand w) {
             checkExpression(w.cond(), locals);
             for (Command cc : w.body()) checkCommand(cc, locals);
+            return;
         }
     }
 

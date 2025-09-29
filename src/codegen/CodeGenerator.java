@@ -32,6 +32,16 @@ public class CodeGenerator {
             if (c instanceof VarDeclCommand v) vars.add(v.name());
         }
 
+        // também reservar espaço para variáveis locais de funções (mangle: fun_var)
+        for (Declaration d : program.getDeclarations()) {
+            if (d instanceof FunDeclaration f) {
+                // reservar espaço apenas para locals (parâmetros ficam na pilha)
+                for (VarDeclaration local : f.getLocals()) {
+                    vars.add(mangleLocalName(f, local.getName()));
+                }
+            }
+        }
+
         // seção bss
         sb.append(".section .bss\n");
         for (String v : vars) sb.append(".lcomm ").append(v).append(", 8\n");
@@ -81,9 +91,23 @@ public class CodeGenerator {
         sb.append("    push %rbp\n");
         sb.append("    mov %rsp, %rbp\n");
 
+        // Aloca espaço na pilha para parâmetros (8 bytes cada) e salva cópias
+        List<String> params = f.getParameters();
+        int paramBytes = params.size() * 8;
+        if (paramBytes > 0) {
+            sb.append("    sub $").append(paramBytes).append(", %rsp\n");
+            for (int i = 0; i < params.size(); i++) {
+                if (i >= ARG_REGS.length) {
+                    throw new IllegalStateException("Mais de 6 parâmetros não suportado.");
+                }
+                sb.append("    mov ").append(ARG_REGS[i]).append(", ")
+                  .append(paramMemRef(i)).append("\n");
+            }
+        }
+
         for (VarDeclaration v : f.getLocals()) {
             genExpr(v.getExpression(), sb);
-            sb.append("    mov %rax, ").append(v.getName()).append("\n");
+            sb.append("    mov %rax, ").append(resolveSymbolName(v.getName())).append("\n");
         }
 
         for (Command c : f.getCommands()) {
@@ -97,13 +121,13 @@ public class CodeGenerator {
     private void genCmd(Command command, StringBuilder sb) {
         if (command instanceof AssignCommand a) {
             genExpr(a.expr(), sb);
-            sb.append("    mov %rax, ").append(a.var()).append("\n");
+            sb.append("    mov %rax, ").append(resolveSymbolName(a.var())).append("\n");
             return;
         }
 
         if (command instanceof VarDeclCommand v) {
             genExpr(v.expr(), sb);
-            sb.append("    mov %rax, ").append(v.name()).append("\n");
+            sb.append("    mov %rax, ").append(resolveSymbolName(v.name())).append("\n");
             return;
         }
 
@@ -143,6 +167,7 @@ public class CodeGenerator {
         if (command instanceof ReturnCommand r) {
             genExpr(r.expr(), sb);
             if (currentFunction != null) {
+                sb.append("    mov %rbp, %rsp\n");
                 sb.append("    pop %rbp\n");
                 sb.append("    ret\n");
             } else {
@@ -167,18 +192,7 @@ public class CodeGenerator {
         }
 
         if (e instanceof VariableReference v) {
-            if (currentFunction != null) {
-                List<String> params = currentFunction.getParameters();
-                int idx = params.indexOf(v.getName());
-                if (idx >= 0) {
-                    if (idx >= ARG_REGS.length) {
-                        throw new IllegalStateException("Mais de 6 parâmetros não suportado.");
-                    }
-                    sb.append("    mov ").append(ARG_REGS[idx]).append(", %rax\n");
-                    return;
-                }
-            }
-            sb.append("    mov ").append(v.getName()).append(", %rax\n");
+            sb.append("    mov ").append(resolveSymbolName(v.getName())).append(", %rax\n");
             return;
         }
 
@@ -281,7 +295,7 @@ public class CodeGenerator {
             for (int i = 0; i < n; i++) {
                 Expression arg = args.get(i);
                 if (arg instanceof VariableReference v) {
-                    sb.append("    mov ").append(v.getName()).append(", ").append(ARG_REGS[i]).append("\n");
+                    sb.append("    mov ").append(resolveSymbolName(v.getName())).append(", ").append(ARG_REGS[i]).append("\n");
                 } else {
                     genExpr(arg, sb);
                     sb.append("    mov %rax, ").append(ARG_REGS[i]).append("\n");
@@ -293,5 +307,41 @@ public class CodeGenerator {
         }
 
         throw new IllegalStateException("Expressão não suportada: " + e.getClass().getSimpleName());
+    }
+
+    // ===================== Resolução de símbolos =====================
+    private String resolveSymbolName(String varName) {
+        if (currentFunction == null) return varName;
+
+        // Se for parâmetro, usa slot na pilha (estável através de chamadas)
+        List<String> params = currentFunction.getParameters();
+        if (params != null && params.contains(varName)) {
+            int idx = params.indexOf(varName);
+            return paramMemRef(idx);
+        }
+
+        // Se for local da função corrente, usa nome mangled
+        if (isLocalOf(currentFunction, varName)) {
+            return mangleLocalName(currentFunction, varName);
+        }
+
+        // Caso contrário, assume global
+        return varName;
+    }
+
+    private boolean isLocalOf(FunDeclaration f, String varName) {
+        for (VarDeclaration v : f.getLocals()) {
+            if (v.getName().equals(varName)) return true;
+        }
+        return false;
+    }
+
+    private String mangleLocalName(FunDeclaration f, String varName) {
+        return f.getName() + "_" + varName;
+    }
+
+    private String paramMemRef(int idx) {
+        int offset = (idx + 1) * 8;
+        return "-" + offset + "(%rbp)";
     }
 }
