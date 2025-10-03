@@ -145,6 +145,9 @@ public class SemanticExecutor {
                 case MENOR -> (a < c) ? 1 : 0;
                 case MAIOR -> (a > c) ? 1 : 0;
                 case IGUALDADE -> (a == c) ? 1 : 0;
+                case MENOR_IGUAL -> (a <= c) ? 1 : 0;
+                case MAIOR_IGUAL -> (a >= c) ? 1 : 0;
+                case DIFERENTE -> (a != c) ? 1 : 0;
                 default -> throw new IllegalStateException("Operador não suportado: " + b.getOperator());
             };
         }

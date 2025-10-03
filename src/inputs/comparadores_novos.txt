@@ -1,0 +1,30 @@
+fun maiorIgualCinco(n) {
+    if n >= 5 {
+        return 1;
+    } else {
+        return 2;
+    }
+}
+
+fun menorIgualCinco(n) {
+    if n <= 5 {
+        return 1;
+    } else {
+        return 2;
+    }
+}
+
+fun diferenteCinco(n) {
+    if n != 5 {
+        return 1;
+    } else {
+        return 2;
+    }
+}
+
+
+main {
+    var x = 5;
+    return diferenteCinco(x);
+}
+#EXPECT: 2#

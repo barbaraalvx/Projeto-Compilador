@@ -284,6 +284,16 @@ public class CodeGenerator {
                     sb.append("    setz %cl\n");
                     sb.append("    mov %rcx, %rax\n");
                 }
+                case "!=" -> { // NOVO
+                    genExpr(b.getRight(), sb);
+                    sb.append("    push %rax\n");
+                    genExpr(b.getLeft(), sb);
+                    sb.append("    pop %rbx\n");
+                    sb.append("    xor %rcx, %rcx\n");
+                    sb.append("    cmp %rbx, %rax\n");
+                    sb.append("    setne %cl\n"); // set if not equal
+                    sb.append("    mov %rcx, %rax\n");
+                }
                 case "<" -> {
                     genExpr(b.getRight(), sb);
                     sb.append("    push %rax\n");
@@ -294,6 +304,16 @@ public class CodeGenerator {
                     sb.append("    setl %cl\n");
                     sb.append("    mov %rcx, %rax\n");
                 }
+                case "<=" -> {
+                    genExpr(b.getRight(), sb);
+                    sb.append("    push %rax\n");
+                    genExpr(b.getLeft(), sb);
+                    sb.append("    pop %rbx\n");
+                    sb.append("    xor %rcx, %rcx\n");
+                    sb.append("    cmp %rbx, %rax\n");
+                    sb.append("    setle %cl\n"); // set if less or equal
+                    sb.append("    mov %rcx, %rax\n");
+                }
                 case ">" -> {
                     genExpr(b.getRight(), sb);
                     sb.append("    push %rax\n");
@@ -302,6 +322,16 @@ public class CodeGenerator {
                     sb.append("    xor %rcx, %rcx\n");
                     sb.append("    cmp %rbx, %rax\n");
                     sb.append("    setg %cl\n");
+                    sb.append("    mov %rcx, %rax\n");
+                }
+                case ">=" -> { // NOVO
+                    genExpr(b.getRight(), sb);
+                    sb.append("    push %rax\n");
+                    genExpr(b.getLeft(), sb);
+                    sb.append("    pop %rbx\n");
+                    sb.append("    xor %rcx, %rcx\n");
+                    sb.append("    cmp %rbx, %rax\n");
+                    sb.append("    setge %cl\n"); // set if greater or equal
                     sb.append("    mov %rcx, %rax\n");
                 }
                 default -> throw new IllegalStateException("Operador inválido: " + op);

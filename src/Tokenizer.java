@@ -106,6 +106,65 @@ public class Tokenizer {
                 // se não for operador composto, cai no fluxo de 1 char: '=' (atribuição/declaração)
             }
 
+            // ... dentro do while, depois de calcular 'c' e antes de isSingleCharToken(c)
+            if (c == '<') {
+                // olha próximo char para operadores compostos
+                if ((index + 1) < content.length()) {
+                    char nextChar = content.charAt(index + 1);
+                    if (!isComment) {
+                        Position pos = new Position(index, row, column);
+                        switch (nextChar) {
+                            case '=' -> {
+                                tokens.add(new Token(TypeEnum.MENOR_IGUAL, "<=", pos));
+                                index += 2;
+                                column += 2;
+                                continue;
+                            }
+                        }
+                    }
+                }
+                // se não for operador composto, cai no fluxo de 1 char: '<' (MENOR)
+            }
+
+            // ... dentro do while, depois de calcular 'c' e antes de isSingleCharToken(c)
+            if (c == '>') {
+                // olha próximo char para operadores compostos
+                if ((index + 1) < content.length()) {
+                    char nextChar = content.charAt(index + 1);
+                    if (!isComment) {
+                        Position pos = new Position(index, row, column);
+                        switch (nextChar) {
+                            case '=' -> {
+                                tokens.add(new Token(TypeEnum.MAIOR_IGUAL, ">=", pos));
+                                index += 2;
+                                column += 2;
+                                continue;
+                            }
+                        }
+                    }
+                }
+                // se não for operador composto, cai no fluxo de 1 char: '<' (MAIOR)
+            }
+
+            if (c == '!') {
+                // olha próximo char para operadores compostos
+                if ((index + 1) < content.length()) {
+                    char nextChar = content.charAt(index + 1);
+                    if (!isComment) {
+                        Position pos = new Position(index, row, column);
+                        switch (nextChar) {
+                            case '=' -> {
+                                tokens.add(new Token(TypeEnum.DIFERENTE, "!=", pos));
+                                index += 2;
+                                column += 2;
+                                continue;
+                            }
+                        }
+                    }
+                }
+                // se não for operador composto, cai no fluxo de 1 char: '<' (MAIOR)
+            }
+
             // Caso seja um caracter sozinho ( ) + - * /, usa a função addSingleChar e aumenta a posição
             if (isSingleCharToken(c)) {
                 //verifica se não é um comentario e só então adiciona ao conjunto de tokens

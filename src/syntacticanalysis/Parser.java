@@ -123,7 +123,12 @@ public class Parser {
     // apenas <, >, ==
     private Expression parseExpC() throws SyntaxException {
         Expression left = parseExpA();
-        while (peek(TypeEnum.MENOR) || peek(TypeEnum.MAIOR) || peek(TypeEnum.IGUALDADE)) {
+        while (peek(TypeEnum.MENOR) ||
+                peek(TypeEnum.MAIOR) ||
+                peek(TypeEnum.IGUALDADE) ||
+                peek(TypeEnum.MAIOR_IGUAL) ||
+                peek(TypeEnum.MENOR_IGUAL) ||
+                peek(TypeEnum.DIFERENTE )) {
             Token opTok = nextToken();
             Expression right = parseExpA();
             left = new BinaryOperation(opTok.getType(), left, right);

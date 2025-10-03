@@ -26,7 +26,7 @@ public class SemanticAnalyzer {
                 if (functionArity.containsKey(f.getName())) {
                     throw new SemanticException("Função já declarada: " + f.getName());
                 }
-                functionArity.put(f.getName(), f.getParameters().size()); // ✅ ajustado
+                functionArity.put(f.getName(), f.getParameters().size());
             }
         }
 
@@ -42,7 +42,6 @@ public class SemanticAnalyzer {
         for (Command c : program.getCommands()) {
             checkCommand(c, null);
         }
-        // ❌ REMOVIDO: não há mais program.getFinalExpression()
 
         // 4. Funções
         for (Declaration d : program.getDeclarations()) {
@@ -53,7 +52,7 @@ public class SemanticAnalyzer {
     }
 
     private void analyzeFunction(FunDeclaration f) {
-        Set<String> locals = new HashSet<>(f.getParameters()); // ✅ ajustado
+        Set<String> locals = new HashSet<>(f.getParameters());
         for (VarDeclaration v : f.getLocals()) {
             checkExpression(v.getExpression(), locals);
             locals.add(v.getName());
@@ -61,7 +60,6 @@ public class SemanticAnalyzer {
         for (Command c : f.getCommands()) {
             checkCommand(c, locals);
         }
-        // ❌ REMOVIDO: não usar mais f.getReturnExpression()
     }
 
     private void checkCommand(Command c, Set<String> locals) {
