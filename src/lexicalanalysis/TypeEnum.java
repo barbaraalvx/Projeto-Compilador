@@ -28,7 +28,10 @@ public enum TypeEnum {
     ATRIB_SOMA("=+"),
     ATRIB_SUBTRACAO("=-"),
     ATRIB_MULTIPLICACAO("=*"),
-    ATRIB_DIVISAO("=/");
+    ATRIB_DIVISAO("=/"),
+    MENOR_IGUAL("<="),
+    MAIOR_IGUAL(">="),
+    DIFERENTE("!=");
 
 
     private final String label;
