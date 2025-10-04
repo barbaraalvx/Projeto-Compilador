@@ -31,7 +31,10 @@ public enum TypeEnum {
     ATRIB_DIVISAO("=/"),
     MENOR_IGUAL("<="),
     MAIOR_IGUAL(">="),
-    DIFERENTE("!=");
+    DIFERENTE("!="),
+    MODULO("%"),
+    DIVISAO_INTEIRA("//"),
+    EXPONENCIACAO("**");
 
 
     private final String label;

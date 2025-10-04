@@ -1,9 +1,8 @@
+import java.util.ArrayList;
+import java.util.List;
 import lexicalanalysis.Position;
 import lexicalanalysis.Token;
 import lexicalanalysis.TypeEnum;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Tokenizer {
 
@@ -165,6 +164,44 @@ public class Tokenizer {
                 // se não for operador composto, cai no fluxo de 1 char: '<' (MAIOR)
             }
 
+            // Operadores aritméticos compostos
+            if (c == '/') {
+                if ((index + 1) < content.length()) {
+                    char nextChar = content.charAt(index + 1);
+                    if (!isComment && nextChar == '/') {
+                        Position pos = new Position(index, row, column);
+                        tokens.add(new Token(TypeEnum.DIVISAO_INTEIRA, "//", pos));
+                        index += 2;
+                        column += 2;
+                        continue;
+                    }
+                }
+            }
+
+            if (c == '*') {
+                if ((index + 1) < content.length()) {
+                    char nextChar = content.charAt(index + 1);
+                    if (!isComment && nextChar == '*') {
+                        Position pos = new Position(index, row, column);
+                        tokens.add(new Token(TypeEnum.EXPONENCIACAO, "**", pos));
+                        index += 2;
+                        column += 2;
+                        continue;
+                    }
+                }
+            }
+
+            if (c == '%') {
+                if (!isComment) {
+                    Position pos = new Position(index, row, column);
+                    tokens.add(new Token(TypeEnum.MODULO, "%", pos));
+                }
+                index++;
+                column++;
+                continue;
+            }
+
+
             // Caso seja um caracter sozinho ( ) + - * /, usa a função addSingleChar e aumenta a posição
             if (isSingleCharToken(c)) {
                 //verifica se não é um comentario e só então adiciona ao conjunto de tokens
@@ -251,7 +288,7 @@ public class Tokenizer {
 
     private static boolean isSingleCharToken(char c) {
         return switch (c) {
-            case '(', ')', '+', '-', '*', '/', ';', '=', '{', '}', '<', '>', ',' -> true;
+            case '(', ')', '+', '-', '*', '/', ';', '=', '{', '}', '<', '>', ',', '%' -> true;
             default -> false;
         };
     }
@@ -271,6 +308,7 @@ public class Tokenizer {
             case '<' -> new Token(TypeEnum.MENOR, pos);
             case '>' -> new Token(TypeEnum.MAIOR, pos);
             case ',' -> new Token(TypeEnum.VIRGULA, pos);
+            case '%' -> new Token(TypeEnum.MODULO, pos);
             default -> throw new IllegalArgumentException("Token inesperado: " + c);
         };
     }

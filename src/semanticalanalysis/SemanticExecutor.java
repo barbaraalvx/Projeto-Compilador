@@ -1,8 +1,8 @@
 package semanticalanalysis;
 
 import java.util.*;
-import syntacticanalysis.*;
 import semanticalanalysis.exceptions.SemanticException;
+import syntacticanalysis.*;
 import syntacticanalysis.commands.*;
 import syntacticanalysis.expression.*;
 
@@ -148,6 +148,9 @@ public class SemanticExecutor {
                 case MENOR_IGUAL -> (a <= c) ? 1 : 0;
                 case MAIOR_IGUAL -> (a >= c) ? 1 : 0;
                 case DIFERENTE -> (a != c) ? 1 : 0;
+                case MODULO -> a % c;
+                case DIVISAO_INTEIRA -> a / c;
+                case EXPONENCIACAO -> (int) Math.pow(a, c);
                 default -> throw new IllegalStateException("Operador não suportado: " + b.getOperator());
             };
         }

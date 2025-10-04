@@ -2,15 +2,14 @@ package syntacticanalysis;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import lexicalanalysis.Position;
+import lexicalanalysis.Token;
+import lexicalanalysis.TypeEnum;
 import syntacticanalysis.commands.*;
 import syntacticanalysis.exceptions.SyntaxException;
 import syntacticanalysis.expression.BinaryOperation;
 import syntacticanalysis.expression.Const;
 import syntacticanalysis.expression.Expression;
-import lexicalanalysis.Position;
-import lexicalanalysis.Token;
-import lexicalanalysis.TypeEnum;
 import syntacticanalysis.expression.FunCall;
 
 public class Parser {
@@ -146,11 +145,22 @@ public class Parser {
         return left;
     }
 
-    private Expression parseExpM() throws SyntaxException {
+    private Expression parseExpP() throws SyntaxException {
         Expression left = parsePrim();
-        while (peek(TypeEnum.MULTIPLICACAO) || peek(TypeEnum.DIVISAO)) {
+        while (peek(TypeEnum.EXPONENCIACAO)) {
             Token opTok = nextToken();
             Expression right = parsePrim();
+            left = new BinaryOperation(opTok.getType(), left, right);
+        }
+        return left;
+    }
+
+    private Expression parseExpM() throws SyntaxException {
+        Expression left = parseExpP();
+        while (peek(TypeEnum.MULTIPLICACAO) || peek(TypeEnum.DIVISAO) ||
+               peek(TypeEnum.DIVISAO_INTEIRA) || peek(TypeEnum.MODULO)) {
+            Token opTok = nextToken();
+            Expression right = parseExpP();
             left = new BinaryOperation(opTok.getType(), left, right);
         }
         return left;

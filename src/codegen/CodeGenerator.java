@@ -1,13 +1,11 @@
 package codegen;
 
-import syntacticanalysis.*;
-import syntacticanalysis.commands.*;
-import syntacticanalysis.expression.*;
-import syntacticanalysis.VariableReference;
-
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import syntacticanalysis.*;
+import syntacticanalysis.commands.*;
+import syntacticanalysis.expression.*;
 
 public class CodeGenerator {
 
@@ -333,6 +331,37 @@ public class CodeGenerator {
                     sb.append("    cmp %rbx, %rax\n");
                     sb.append("    setge %cl\n"); // set if greater or equal
                     sb.append("    mov %rcx, %rax\n");
+                }
+                                case "%" -> {
+                    genExpr(b.getRight(), sb);
+                    sb.append("    mov %rax, %rcx\n");
+                    genExpr(b.getLeft(), sb);
+                    sb.append("    cqo\n");
+                    sb.append("    idiv %rcx\n");
+                    sb.append("    mov %rdx, %rax\n");
+                }
+                case "//" -> {
+                    genExpr(b.getRight(), sb);
+                    sb.append("    mov %rax, %rcx\n");
+                    genExpr(b.getLeft(), sb);
+                    sb.append("    cqo\n");
+                    sb.append("    idiv %rcx\n");
+                }
+                case "**" -> {
+                    genExpr(b.getRight(), sb);
+                    sb.append("    mov %rax, %rcx\n");
+                    genExpr(b.getLeft(), sb);
+                    sb.append("    mov %rax, %rbx\n");
+                    sb.append("    mov $1, %rax\n");
+                    String loop = newLabel("Lexp");
+                    String end = newLabel("Lexp_end");
+                    sb.append(loop).append(":\n");
+                    sb.append("    cmp $0, %rcx\n");
+                    sb.append("    jle ").append(end).append("\n");
+                    sb.append("    imul %rbx, %rax\n");
+                    sb.append("    dec %rcx\n");
+                    sb.append("    jmp ").append(loop).append("\n");
+                    sb.append(end).append(":\n");
                 }
                 default -> throw new IllegalStateException("Operador inválido: " + op);
             }

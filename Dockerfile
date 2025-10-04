@@ -1,11 +1,13 @@
 FROM openjdk:21-bullseye
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update && \
-    apt-get install -y python3 python3-pip findutils && \
-    pip3 install cram
+    apt-get install -y --no-install-recommends python3 python3-pip && \
+    pip install cram && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
 COPY . .
 
 RUN find src -name "*.java" > sources.txt && \
