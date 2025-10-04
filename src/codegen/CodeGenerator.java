@@ -204,6 +204,13 @@ public class CodeGenerator {
             return;
         }
 
+        if (command instanceof PrintCommand p) {
+            genExpr(p.getExpr(), sb);
+            sb.append("    mov %rax, %rdi\n");
+            sb.append("    call imprime_num\n");
+            return;
+        }
+        
         throw new IllegalStateException("Cmd não suportado: " + command.getClass().getSimpleName());
     }
 

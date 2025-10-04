@@ -271,6 +271,7 @@ public class Tokenizer {
                         case "fun" -> tokens.add(new Token(TypeEnum.FUN, lex, identifierPos));
                         case "var" -> tokens.add(new Token(TypeEnum.VAR, lex, identifierPos));
                         case "main" -> tokens.add(new Token(TypeEnum.MAIN, lex, identifierPos));
+                        case "print" -> tokens.add(new Token(TypeEnum.PRINT, lex, identifierPos));
                         default -> tokens.add(new Token(TypeEnum.IDENTIFICADOR, lex, identifierPos));
                     }
                 }

@@ -15,6 +15,7 @@ public enum TypeEnum {
     LCHAVE("{"),
     RCHAVE("}"),
     RETURN("return"),
+    PRINT("print"),
     IF("if"),
     ELSE("else"),
     WHILE("while"),
@@ -38,7 +39,6 @@ public enum TypeEnum {
     E_LOGICO("&&"),
     OU_LOGICO("||"),
     NEGACAO("!");
-
 
     private final String label;
 

@@ -234,6 +234,14 @@ public class Parser {
             VarDeclaration vd = parseVarDeclaration();
             return new VarDeclCommand(vd.getName(), vd.getExpression());
         }
+        if (peek(TypeEnum.PRINT)) {
+            nextToken();
+            expect(TypeEnum.ABRE_PARENTESES);
+            Expression expr = parseExpL();
+            expect(TypeEnum.FECHA_PARENTESES);
+            expect(TypeEnum.PONTO_VIRGULA);
+            return new PrintCommand(expr);
+        }
 
         Token id = expect(TypeEnum.IDENTIFICADOR);
 

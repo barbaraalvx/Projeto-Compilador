@@ -117,6 +117,12 @@ public class SemanticExecutor {
             throw new ReturnValue(eval(r.expr(), globals, locals));
         }
 
+        else if (c instanceof PrintCommand p) {
+            int val = eval(p.getExpr(), globals, locals);
+            System.out.println(val); // imprime no console na execução semântica
+            return;
+        }
+
         throw new IllegalStateException("Comando desconhecido: " + c.getClass());
     }
 
