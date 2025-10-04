@@ -6,6 +6,13 @@ fun op() {
     var e = a ** b;
     return e;
 }
+
 main {
-    return op();
+    var a = 5;
+    var b = 2;
+    var c = a % b;
+    var d = a // b;
+    var e = a ** b;
+
+    return c + (d * 10) + (e * 100);
 }

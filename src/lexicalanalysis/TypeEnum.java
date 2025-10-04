@@ -34,7 +34,10 @@ public enum TypeEnum {
     DIFERENTE("!="),
     MODULO("%"),
     DIVISAO_INTEIRA("//"),
-    EXPONENCIACAO("**");
+    EXPONENCIACAO("**"),
+    E_LOGICO("&&"),
+    OU_LOGICO("||"),
+    NEGACAO("!");
 
 
     private final String label;

@@ -40,6 +40,12 @@ public class CodeGenerator {
             }
         }
 
+        for (Declaration d : program.getDeclarations()) {
+            if (d instanceof FunDeclaration f) {
+                addInnerVars(f.getCommands(), f, vars);
+            }
+        }
+
         // seção bss
         sb.append(".section .bss\n");
         for (String v : vars) sb.append(".lcomm ").append(v).append(", 8\n");
@@ -218,6 +224,20 @@ public class CodeGenerator {
             return;
         }
 
+        if (e instanceof UnaryOperation u) {
+            genExpr(u.getOperand(), sb);
+            switch (u.getOperator().getValor()) {
+                case "!" -> {
+                    sb.append("    cmp $0, %rax\n");
+                    sb.append("    mov $0, %rbx\n");
+                    sb.append("    sete %bl\n");
+                    sb.append("    mov %rbx, %rax\n");
+                }
+                default -> throw new IllegalStateException("Operador unário inválido: " + u.getOperator());
+            }
+            return;
+        }
+
         if (e instanceof BinaryOperation b) {
             String op = b.getOperator().getValor();
 
@@ -363,6 +383,20 @@ public class CodeGenerator {
                     sb.append("    jmp ").append(loop).append("\n");
                     sb.append(end).append(":\n");
                 }
+                case "&&" -> {
+                    genExpr(b.getLeft(), sb);
+                    sb.append("    push %rax\n");
+                    genExpr(b.getRight(), sb);
+                    sb.append("    pop %rbx\n");
+                    sb.append("    and %rbx, %rax\n");
+                }
+                case "||" -> {
+                    genExpr(b.getLeft(), sb);
+                    sb.append("    push %rax\n");
+                    genExpr(b.getRight(), sb);
+                    sb.append("    pop %rbx\n");
+                    sb.append("    or %rbx, %rax\n");
+                }
                 default -> throw new IllegalStateException("Operador inválido: " + op);
             }
             return;
@@ -396,21 +430,19 @@ public class CodeGenerator {
     private String resolveSymbolName(String varName) {
         if (currentFunction == null) return varName;
 
-        // Se for parâmetro, usa slot na pilha (estável através de chamadas)
         List<String> params = currentFunction.getParameters();
         if (params != null && params.contains(varName)) {
             int idx = params.indexOf(varName);
             return paramMemRef(idx);
         }
 
-        // Se for local da função corrente, usa nome mangled
         if (isLocalOf(currentFunction, varName)) {
             return mangleLocalName(currentFunction, varName);
         }
 
-        // Caso contrário, assume global
-        return varName;
+        return mangleLocalName(currentFunction, varName);
     }
+
 
     private boolean isLocalOf(FunDeclaration f, String varName) {
         for (VarDeclaration v : f.getLocals()) {
@@ -426,5 +458,21 @@ public class CodeGenerator {
     private String paramMemRef(int idx) {
         int offset = (idx + 1) * 8;
         return "-" + offset + "(%rbp)";
+    }
+
+    // Busca recursivamente variáveis declaradas dentro de blocos de comandos
+    private void addInnerVars(List<Command> commands, FunDeclaration f, Set<String> vars) {
+        if (commands == null) return;
+
+        for (Command c : commands) {
+            if (c instanceof VarDeclCommand vdc) {
+                vars.add(mangleLocalName(f, vdc.name()));
+            } else if (c instanceof IfCommand ic) {
+                addInnerVars(ic.thenPart(), f, vars);
+                addInnerVars(ic.elsePart(), f, vars);
+            } else if (c instanceof WhileCommand wc) {
+                addInnerVars(wc.body(), f, vars);
+            }
+        }
     }
 }

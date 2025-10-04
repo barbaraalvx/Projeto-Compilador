@@ -151,7 +151,17 @@ public class SemanticExecutor {
                 case MODULO -> a % c;
                 case DIVISAO_INTEIRA -> a / c;
                 case EXPONENCIACAO -> (int) Math.pow(a, c);
+                case E_LOGICO -> ((a != 0) && (c != 0)) ? 1 : 0;
+                case OU_LOGICO -> ((a != 0) || (c != 0)) ? 1 : 0;
                 default -> throw new IllegalStateException("Operador não suportado: " + b.getOperator());
+            };
+        }
+
+        if (e instanceof UnaryOperation u) {
+            int val = eval(u.getOperand(), globals, locals);
+            return switch (u.getOperator()) {
+                case NEGACAO -> (val == 0 ? 1 : 0);
+                default -> throw new IllegalStateException("Operador unário não suportado: " + u.getOperator());
             };
         }
 

@@ -201,6 +201,41 @@ public class Tokenizer {
                 continue;
             }
 
+            // Operadores lógicos compostos e negação
+            if (c == '&' && (index + 1) < content.length() && content.charAt(index + 1) == '&') {
+                if (!isComment) {
+                    tokens.add(new Token(TypeEnum.E_LOGICO, "&&", new Position(index, row, column)));
+                }
+                index += 2;
+                column += 2;
+                continue;
+            }
+
+            if (c == '|' && (index + 1) < content.length() && content.charAt(index + 1) == '|') {
+                if (!isComment) {
+                    tokens.add(new Token(TypeEnum.OU_LOGICO, "||", new Position(index, row, column)));
+                }
+                index += 2;
+                column += 2;
+                continue;
+            }
+
+            if (c == '!') {
+                if ((index + 1) < content.length() && content.charAt(index + 1) == '=') {
+                    if (!isComment) {
+                        tokens.add(new Token(TypeEnum.DIFERENTE, "!=", new Position(index, row, column)));
+                    }
+                    index += 2;
+                    column += 2;
+                } else {
+                    if (!isComment) {
+                        tokens.add(new Token(TypeEnum.NEGACAO, "!", new Position(index, row, column)));
+                    }
+                    index++;
+                    column++;
+                }
+                continue;
+            }
 
             // Caso seja um caracter sozinho ( ) + - * /, usa a função addSingleChar e aumenta a posição
             if (isSingleCharToken(c)) {
