@@ -1,0 +1,51 @@
+fun testeCompleto() {
+    var a = 10;
+    var b = 3;
+    var c = 2;
+    var d = 0;
+
+    # --- Operações aritméticas --- #
+    print(a + b);
+    print(a - b);
+    print(a * b);
+    print(a / b);
+    print(a % b);
+    print(a ** c);  
+
+    # --- Teste lógico e condicional --- #
+    if (a > b && b != 0) {
+        var res1 = 100;
+        print(res1);
+    } else {
+        var res2 = 200;
+        print(res2);
+    }
+
+    # --- Comparações extras pra testar operadores --- #
+    print(a > b);   # 1 #
+    print(a < b);   # 0 #
+    print(a >= b);  # 1 #
+    print(a <= b);  # 0 #
+    print(a == b);  # 0 #
+    print(a != b);  # 1 #
+
+    # --- Teste de || (OR) --- #
+    var x = (a > b) || (b < c);
+    print(x);
+
+    # --- Teste de ! (NOT) --- #
+    var y = !(a == b);
+    print(y);
+
+    # --- Loop controlado --- #
+    while (a > 2) {
+        a = a - 2;
+        print(a);
+    }
+
+    return 42;
+}
+
+main {
+    return testeCompleto();
+}

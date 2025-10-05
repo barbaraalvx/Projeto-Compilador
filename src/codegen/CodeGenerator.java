@@ -208,6 +208,7 @@ public class CodeGenerator {
             genExpr(p.getExpr(), sb);
             sb.append("    mov %rax, %rdi\n");
             sb.append("    call imprime_num\n");
+            sb.append("    mov $10, %rdi\n");
             return;
         }
         
