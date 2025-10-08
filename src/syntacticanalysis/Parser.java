@@ -2,16 +2,16 @@ package syntacticanalysis;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import lexicalanalysis.Position;
+import lexicalanalysis.Token;
+import lexicalanalysis.TypeEnum;
 import syntacticanalysis.commands.*;
 import syntacticanalysis.exceptions.SyntaxException;
 import syntacticanalysis.expression.BinaryOperation;
 import syntacticanalysis.expression.Const;
 import syntacticanalysis.expression.Expression;
-import lexicalanalysis.Position;
-import lexicalanalysis.Token;
-import lexicalanalysis.TypeEnum;
 import syntacticanalysis.expression.FunCall;
+import syntacticanalysis.expression.UnaryOperation;
 
 public class Parser {
 
@@ -76,7 +76,7 @@ public class Parser {
         expect(TypeEnum.VAR);
         Token identToken = expect(TypeEnum.IDENTIFICADOR);
         expect(TypeEnum.IGUAL);
-        Expression expression = parseExpC();
+        Expression expression = parseExpL();
         expect(TypeEnum.PONTO_VIRGULA);
         return new VarDeclaration(identToken.getLexeme(), expression);
     }
@@ -111,7 +111,6 @@ public class Parser {
         expect(TypeEnum.RCHAVE);
 
         return new FunDeclaration(identToken.getLexeme(), params, locals, body);
-
     }
 
     private Declaration parseDeclaration() throws SyntaxException {
@@ -120,10 +119,24 @@ public class Parser {
         throw new SyntaxException(lookNextToken().getPosition(), null, lookNextToken().getType());
     }
 
-    // apenas <, >, ==
+    private Expression parseExpL() throws SyntaxException {
+        Expression left = parseExpC();
+        while (peek(TypeEnum.E_LOGICO) || peek(TypeEnum.OU_LOGICO)) {
+            Token opTok = nextToken();
+            Expression right = parseExpC();
+            left = new BinaryOperation(opTok.getType(), left, right);
+        }
+        return left;
+    }
+
     private Expression parseExpC() throws SyntaxException {
         Expression left = parseExpA();
-        while (peek(TypeEnum.MENOR) || peek(TypeEnum.MAIOR) || peek(TypeEnum.IGUALDADE)) {
+        while (peek(TypeEnum.MENOR) ||
+                peek(TypeEnum.MAIOR) ||
+                peek(TypeEnum.IGUALDADE) ||
+                peek(TypeEnum.MAIOR_IGUAL) ||
+                peek(TypeEnum.MENOR_IGUAL) ||
+                peek(TypeEnum.DIFERENTE)) {
             Token opTok = nextToken();
             Expression right = parseExpA();
             left = new BinaryOperation(opTok.getType(), left, right);
@@ -142,8 +155,21 @@ public class Parser {
     }
 
     private Expression parseExpM() throws SyntaxException {
+        Expression left = parseExpP();
+        while (peek(TypeEnum.MULTIPLICACAO) ||
+               peek(TypeEnum.DIVISAO) ||
+               peek(TypeEnum.DIVISAO_INTEIRA) ||
+               peek(TypeEnum.MODULO)) {
+            Token opTok = nextToken();
+            Expression right = parseExpP();
+            left = new BinaryOperation(opTok.getType(), left, right);
+        }
+        return left;
+    }
+
+    private Expression parseExpP() throws SyntaxException {
         Expression left = parsePrim();
-        while (peek(TypeEnum.MULTIPLICACAO) || peek(TypeEnum.DIVISAO)) {
+        while (peek(TypeEnum.EXPONENCIACAO)) {
             Token opTok = nextToken();
             Expression right = parsePrim();
             left = new BinaryOperation(opTok.getType(), left, right);
@@ -156,7 +182,13 @@ public class Parser {
         if (token == null) {
             throw new SyntaxException(new Position(-1, -1, -1), null, null);
         }
+
         switch (token.getType()) {
+            case NEGACAO -> {
+                nextToken();
+                Expression inner = parsePrim();
+                return new UnaryOperation(TypeEnum.NEGACAO, inner);
+            }
             case DIGITO -> {
                 nextToken();
                 return new Const(Integer.parseInt(token.getLexeme()));
@@ -167,10 +199,10 @@ public class Parser {
                     nextToken();
                     List<Expression> args = new ArrayList<>();
                     if (!peek(TypeEnum.FECHA_PARENTESES)) {
-                        args.add(parseExpC());
+                        args.add(parseExpL());
                         while (peek(TypeEnum.VIRGULA)) {
                             nextToken();
-                            args.add(parseExpC());
+                            args.add(parseExpL());
                         }
                     }
                     expect(TypeEnum.FECHA_PARENTESES);
@@ -181,7 +213,7 @@ public class Parser {
             }
             case ABRE_PARENTESES -> {
                 nextToken();
-                Expression inner = parseExpC();
+                Expression inner = parseExpL();
                 expect(TypeEnum.FECHA_PARENTESES);
                 return inner;
             }
@@ -194,7 +226,7 @@ public class Parser {
         if (peek(TypeEnum.WHILE)) return parseWhile();
         if (peek(TypeEnum.RETURN)) {
             nextToken();
-            Expression e = parseExpC();
+            Expression e = parseExpL();
             expect(TypeEnum.PONTO_VIRGULA);
             return new ReturnCommand(e);
         }
@@ -202,16 +234,34 @@ public class Parser {
             VarDeclaration vd = parseVarDeclaration();
             return new VarDeclCommand(vd.getName(), vd.getExpression());
         }
+        if (peek(TypeEnum.PRINT)) {
+            nextToken();
+            expect(TypeEnum.ABRE_PARENTESES);
+            Expression expr = parseExpL();
+            expect(TypeEnum.FECHA_PARENTESES);
+            expect(TypeEnum.PONTO_VIRGULA);
+            return new PrintCommand(expr);
+        }
+
         Token id = expect(TypeEnum.IDENTIFICADOR);
+
+        if (peek(TypeEnum.ATRIB_SOMA) || peek(TypeEnum.ATRIB_SUBTRACAO) ||
+            peek(TypeEnum.ATRIB_MULTIPLICACAO) || peek(TypeEnum.ATRIB_DIVISAO)) {
+            Token opToken = nextToken();
+            Expression e = parseExpL();
+            expect(TypeEnum.PONTO_VIRGULA);
+            return new CompoundAssignCommand(id.getLexeme(), opToken.getType(), e);
+        }
+
         expect(TypeEnum.IGUAL);
-        Expression e = parseExpC();
+        Expression e = parseExpL();
         expect(TypeEnum.PONTO_VIRGULA);
         return new AssignCommand(id.getLexeme(), e);
     }
 
     private IfCommand parseIf() throws SyntaxException {
         expect(TypeEnum.IF);
-        Expression cond = parseExpC();
+        Expression cond = parseExpL();
         List<Command> thenPart = parseBracedCmds();
         expect(TypeEnum.ELSE);
         List<Command> elsePart = parseBracedCmds();
@@ -220,7 +270,7 @@ public class Parser {
 
     private WhileCommand parseWhile() throws SyntaxException {
         expect(TypeEnum.WHILE);
-        Expression cond = parseExpC();
+        Expression cond = parseExpL();
         List<Command> body = parseBracedCmds();
         return new WhileCommand(cond, body);
     }

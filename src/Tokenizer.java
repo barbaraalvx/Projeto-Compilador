@@ -1,9 +1,8 @@
+import java.util.ArrayList;
+import java.util.List;
 import lexicalanalysis.Position;
 import lexicalanalysis.Token;
 import lexicalanalysis.TypeEnum;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Tokenizer {
 
@@ -64,17 +63,178 @@ public class Tokenizer {
 
             // ... dentro do while, depois de calcular 'c' e antes de isSingleCharToken(c)
             if (c == '=') {
-                // olha próximo char
-                if ((index + 1) < content.length() && content.charAt(index + 1) == '=') {
+                // olha próximo char para operadores compostos
+                if ((index + 1) < content.length()) {
+                    char nextChar = content.charAt(index + 1);
                     if (!isComment) {
                         Position pos = new Position(index, row, column);
-                        tokens.add(new Token(TypeEnum.IGUALDADE, "==", pos));
+                        switch (nextChar) {
+                            case '+' -> {
+                                tokens.add(new Token(TypeEnum.ATRIB_SOMA, "=+", pos));
+                                index += 2;
+                                column += 2;
+                                continue;
+                            }
+                            case '-' -> {
+                                tokens.add(new Token(TypeEnum.ATRIB_SUBTRACAO, "=-", pos));
+                                index += 2;
+                                column += 2;
+                                continue;
+                            }
+                            case '*' -> {
+                                tokens.add(new Token(TypeEnum.ATRIB_MULTIPLICACAO, "=*", pos));
+                                index += 2;
+                                column += 2;
+                                continue;
+                            }
+                            case '/' -> {
+                                tokens.add(new Token(TypeEnum.ATRIB_DIVISAO, "=/", pos));
+                                index += 2;
+                                column += 2;
+                                continue;
+                            }
+                            case '=' -> {
+                                tokens.add(new Token(TypeEnum.IGUALDADE, "==", pos));
+                                index += 2;
+                                column += 2;
+                                continue;
+                            }
+                        }
+                    }
+                }
+                // se não for operador composto, cai no fluxo de 1 char: '=' (atribuição/declaração)
+            }
+
+            // ... dentro do while, depois de calcular 'c' e antes de isSingleCharToken(c)
+            if (c == '<') {
+                // olha próximo char para operadores compostos
+                if ((index + 1) < content.length()) {
+                    char nextChar = content.charAt(index + 1);
+                    if (!isComment) {
+                        Position pos = new Position(index, row, column);
+                        switch (nextChar) {
+                            case '=' -> {
+                                tokens.add(new Token(TypeEnum.MENOR_IGUAL, "<=", pos));
+                                index += 2;
+                                column += 2;
+                                continue;
+                            }
+                        }
+                    }
+                }
+                // se não for operador composto, cai no fluxo de 1 char: '<' (MENOR)
+            }
+
+            // ... dentro do while, depois de calcular 'c' e antes de isSingleCharToken(c)
+            if (c == '>') {
+                // olha próximo char para operadores compostos
+                if ((index + 1) < content.length()) {
+                    char nextChar = content.charAt(index + 1);
+                    if (!isComment) {
+                        Position pos = new Position(index, row, column);
+                        switch (nextChar) {
+                            case '=' -> {
+                                tokens.add(new Token(TypeEnum.MAIOR_IGUAL, ">=", pos));
+                                index += 2;
+                                column += 2;
+                                continue;
+                            }
+                        }
+                    }
+                }
+                // se não for operador composto, cai no fluxo de 1 char: '<' (MAIOR)
+            }
+
+            if (c == '!') {
+                // olha próximo char para operadores compostos
+                if ((index + 1) < content.length()) {
+                    char nextChar = content.charAt(index + 1);
+                    if (!isComment) {
+                        Position pos = new Position(index, row, column);
+                        switch (nextChar) {
+                            case '=' -> {
+                                tokens.add(new Token(TypeEnum.DIFERENTE, "!=", pos));
+                                index += 2;
+                                column += 2;
+                                continue;
+                            }
+                        }
+                    }
+                }
+                // se não for operador composto, cai no fluxo de 1 char: '<' (MAIOR)
+            }
+
+            // Operadores aritméticos compostos
+            if (c == '/') {
+                if ((index + 1) < content.length()) {
+                    char nextChar = content.charAt(index + 1);
+                    if (!isComment && nextChar == '/') {
+                        Position pos = new Position(index, row, column);
+                        tokens.add(new Token(TypeEnum.DIVISAO_INTEIRA, "//", pos));
+                        index += 2;
+                        column += 2;
+                        continue;
+                    }
+                }
+            }
+
+            if (c == '*') {
+                if ((index + 1) < content.length()) {
+                    char nextChar = content.charAt(index + 1);
+                    if (!isComment && nextChar == '*') {
+                        Position pos = new Position(index, row, column);
+                        tokens.add(new Token(TypeEnum.EXPONENCIACAO, "**", pos));
+                        index += 2;
+                        column += 2;
+                        continue;
+                    }
+                }
+            }
+
+            if (c == '%') {
+                if (!isComment) {
+                    Position pos = new Position(index, row, column);
+                    tokens.add(new Token(TypeEnum.MODULO, "%", pos));
+                }
+                index++;
+                column++;
+                continue;
+            }
+
+            // Operadores lógicos compostos e negação
+            if (c == '&' && (index + 1) < content.length() && content.charAt(index + 1) == '&') {
+                if (!isComment) {
+                    tokens.add(new Token(TypeEnum.E_LOGICO, "&&", new Position(index, row, column)));
+                }
+                index += 2;
+                column += 2;
+                continue;
+            }
+
+            if (c == '|' && (index + 1) < content.length() && content.charAt(index + 1) == '|') {
+                if (!isComment) {
+                    tokens.add(new Token(TypeEnum.OU_LOGICO, "||", new Position(index, row, column)));
+                }
+                index += 2;
+                column += 2;
+                continue;
+            }
+
+            if (c == '!') {
+                if ((index + 1) < content.length() && content.charAt(index + 1) == '=') {
+                    if (!isComment) {
+                        tokens.add(new Token(TypeEnum.DIFERENTE, "!=", new Position(index, row, column)));
                     }
                     index += 2;
                     column += 2;
-                    continue;
+                } else {
+                    if (!isComment) {
+                        tokens.add(new Token(TypeEnum.NEGACAO, "!", new Position(index, row, column)));
+                    }
+                    index++;
+                    column++;
                 }
-                // se não for '==', cai no fluxo de 1 char: '=' (atribuição/declaração)
+                continue;
             }
 
             // Caso seja um caracter sozinho ( ) + - * /, usa a função addSingleChar e aumenta a posição
@@ -111,6 +271,7 @@ public class Tokenizer {
                         case "fun" -> tokens.add(new Token(TypeEnum.FUN, lex, identifierPos));
                         case "var" -> tokens.add(new Token(TypeEnum.VAR, lex, identifierPos));
                         case "main" -> tokens.add(new Token(TypeEnum.MAIN, lex, identifierPos));
+                        case "print" -> tokens.add(new Token(TypeEnum.PRINT, lex, identifierPos));
                         default -> tokens.add(new Token(TypeEnum.IDENTIFICADOR, lex, identifierPos));
                     }
                 }
@@ -163,7 +324,7 @@ public class Tokenizer {
 
     private static boolean isSingleCharToken(char c) {
         return switch (c) {
-            case '(', ')', '+', '-', '*', '/', ';', '=', '{', '}', '<', '>', ',' -> true;
+            case '(', ')', '+', '-', '*', '/', ';', '=', '{', '}', '<', '>', ',', '%' -> true;
             default -> false;
         };
     }
@@ -183,6 +344,7 @@ public class Tokenizer {
             case '<' -> new Token(TypeEnum.MENOR, pos);
             case '>' -> new Token(TypeEnum.MAIOR, pos);
             case ',' -> new Token(TypeEnum.VIRGULA, pos);
+            case '%' -> new Token(TypeEnum.MODULO, pos);
             default -> throw new IllegalArgumentException("Token inesperado: " + c);
         };
     }

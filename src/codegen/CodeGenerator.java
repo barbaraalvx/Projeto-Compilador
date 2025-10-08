@@ -1,13 +1,11 @@
 package codegen;
 
-import syntacticanalysis.*;
-import syntacticanalysis.commands.*;
-import syntacticanalysis.expression.*;
-import syntacticanalysis.VariableReference;
-
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import syntacticanalysis.*;
+import syntacticanalysis.commands.*;
+import syntacticanalysis.expression.*;
 
 public class CodeGenerator {
 
@@ -39,6 +37,12 @@ public class CodeGenerator {
                 for (VarDeclaration local : f.getLocals()) {
                     vars.add(mangleLocalName(f, local.getName()));
                 }
+            }
+        }
+
+        for (Declaration d : program.getDeclarations()) {
+            if (d instanceof FunDeclaration f) {
+                addInnerVars(f.getCommands(), f, vars);
             }
         }
 
@@ -125,6 +129,30 @@ public class CodeGenerator {
             return;
         }
 
+        if (command instanceof CompoundAssignCommand ca) {
+            // Carrega o valor atual da variável
+            sb.append("    mov ").append(resolveSymbolName(ca.var())).append(", %rax\n");
+            sb.append("    push %rax\n");
+            
+            // Gera a expressão do lado direito
+            genExpr(ca.expr(), sb);
+            sb.append("    pop %rbx\n");
+            
+            // Aplica a operação baseada no operador
+            String op = ca.operator().getValor();
+            switch (op) {
+                case "=+" -> sb.append("    add %rbx, %rax\n");
+                case "=-" -> sb.append("    mov %rax, %rcx\n    mov %rbx, %rax\n    sub %rcx, %rax\n");
+                case "=*" -> sb.append("    imul %rbx, %rax\n");
+                case "=/" -> sb.append("    mov %rax, %rcx\n    mov %rbx, %rax\n    cqo\n    idiv %rcx\n");
+                default -> throw new IllegalStateException("Operador composto não suportado: " + op);
+            }
+            
+            // Armazena o resultado de volta na variável
+            sb.append("    mov %rax, ").append(resolveSymbolName(ca.var())).append("\n");
+            return;
+        }
+
         if (command instanceof VarDeclCommand v) {
             genExpr(v.expr(), sb);
             sb.append("    mov %rax, ").append(resolveSymbolName(v.name())).append("\n");
@@ -176,6 +204,14 @@ public class CodeGenerator {
             return;
         }
 
+        if (command instanceof PrintCommand p) {
+            genExpr(p.getExpr(), sb);
+            sb.append("    mov %rax, %rdi\n");
+            sb.append("    call imprime_num\n");
+            sb.append("    mov $10, %rdi\n");
+            return;
+        }
+        
         throw new IllegalStateException("Cmd não suportado: " + command.getClass().getSimpleName());
     }
 
@@ -193,6 +229,20 @@ public class CodeGenerator {
 
         if (e instanceof VariableReference v) {
             sb.append("    mov ").append(resolveSymbolName(v.getName())).append(", %rax\n");
+            return;
+        }
+
+        if (e instanceof UnaryOperation u) {
+            genExpr(u.getOperand(), sb);
+            switch (u.getOperator().getValor()) {
+                case "!" -> {
+                    sb.append("    cmp $0, %rax\n");
+                    sb.append("    mov $0, %rbx\n");
+                    sb.append("    sete %bl\n");
+                    sb.append("    mov %rbx, %rax\n");
+                }
+                default -> throw new IllegalStateException("Operador unário inválido: " + u.getOperator());
+            }
             return;
         }
 
@@ -260,6 +310,16 @@ public class CodeGenerator {
                     sb.append("    setz %cl\n");
                     sb.append("    mov %rcx, %rax\n");
                 }
+                case "!=" -> { // NOVO
+                    genExpr(b.getRight(), sb);
+                    sb.append("    push %rax\n");
+                    genExpr(b.getLeft(), sb);
+                    sb.append("    pop %rbx\n");
+                    sb.append("    xor %rcx, %rcx\n");
+                    sb.append("    cmp %rbx, %rax\n");
+                    sb.append("    setne %cl\n"); // set if not equal
+                    sb.append("    mov %rcx, %rax\n");
+                }
                 case "<" -> {
                     genExpr(b.getRight(), sb);
                     sb.append("    push %rax\n");
@@ -268,6 +328,16 @@ public class CodeGenerator {
                     sb.append("    xor %rcx, %rcx\n");
                     sb.append("    cmp %rbx, %rax\n");
                     sb.append("    setl %cl\n");
+                    sb.append("    mov %rcx, %rax\n");
+                }
+                case "<=" -> {
+                    genExpr(b.getRight(), sb);
+                    sb.append("    push %rax\n");
+                    genExpr(b.getLeft(), sb);
+                    sb.append("    pop %rbx\n");
+                    sb.append("    xor %rcx, %rcx\n");
+                    sb.append("    cmp %rbx, %rax\n");
+                    sb.append("    setle %cl\n"); // set if less or equal
                     sb.append("    mov %rcx, %rax\n");
                 }
                 case ">" -> {
@@ -279,6 +349,61 @@ public class CodeGenerator {
                     sb.append("    cmp %rbx, %rax\n");
                     sb.append("    setg %cl\n");
                     sb.append("    mov %rcx, %rax\n");
+                }
+                case ">=" -> { // NOVO
+                    genExpr(b.getRight(), sb);
+                    sb.append("    push %rax\n");
+                    genExpr(b.getLeft(), sb);
+                    sb.append("    pop %rbx\n");
+                    sb.append("    xor %rcx, %rcx\n");
+                    sb.append("    cmp %rbx, %rax\n");
+                    sb.append("    setge %cl\n"); // set if greater or equal
+                    sb.append("    mov %rcx, %rax\n");
+                }
+                                case "%" -> {
+                    genExpr(b.getRight(), sb);
+                    sb.append("    mov %rax, %rcx\n");
+                    genExpr(b.getLeft(), sb);
+                    sb.append("    cqo\n");
+                    sb.append("    idiv %rcx\n");
+                    sb.append("    mov %rdx, %rax\n");
+                }
+                case "//" -> {
+                    genExpr(b.getRight(), sb);
+                    sb.append("    mov %rax, %rcx\n");
+                    genExpr(b.getLeft(), sb);
+                    sb.append("    cqo\n");
+                    sb.append("    idiv %rcx\n");
+                }
+                case "**" -> {
+                    genExpr(b.getRight(), sb);
+                    sb.append("    mov %rax, %rcx\n");
+                    genExpr(b.getLeft(), sb);
+                    sb.append("    mov %rax, %rbx\n");
+                    sb.append("    mov $1, %rax\n");
+                    String loop = newLabel("Lexp");
+                    String end = newLabel("Lexp_end");
+                    sb.append(loop).append(":\n");
+                    sb.append("    cmp $0, %rcx\n");
+                    sb.append("    jle ").append(end).append("\n");
+                    sb.append("    imul %rbx, %rax\n");
+                    sb.append("    dec %rcx\n");
+                    sb.append("    jmp ").append(loop).append("\n");
+                    sb.append(end).append(":\n");
+                }
+                case "&&" -> {
+                    genExpr(b.getLeft(), sb);
+                    sb.append("    push %rax\n");
+                    genExpr(b.getRight(), sb);
+                    sb.append("    pop %rbx\n");
+                    sb.append("    and %rbx, %rax\n");
+                }
+                case "||" -> {
+                    genExpr(b.getLeft(), sb);
+                    sb.append("    push %rax\n");
+                    genExpr(b.getRight(), sb);
+                    sb.append("    pop %rbx\n");
+                    sb.append("    or %rbx, %rax\n");
                 }
                 default -> throw new IllegalStateException("Operador inválido: " + op);
             }
@@ -313,21 +438,19 @@ public class CodeGenerator {
     private String resolveSymbolName(String varName) {
         if (currentFunction == null) return varName;
 
-        // Se for parâmetro, usa slot na pilha (estável através de chamadas)
         List<String> params = currentFunction.getParameters();
         if (params != null && params.contains(varName)) {
             int idx = params.indexOf(varName);
             return paramMemRef(idx);
         }
 
-        // Se for local da função corrente, usa nome mangled
         if (isLocalOf(currentFunction, varName)) {
             return mangleLocalName(currentFunction, varName);
         }
 
-        // Caso contrário, assume global
-        return varName;
+        return mangleLocalName(currentFunction, varName);
     }
+
 
     private boolean isLocalOf(FunDeclaration f, String varName) {
         for (VarDeclaration v : f.getLocals()) {
@@ -343,5 +466,21 @@ public class CodeGenerator {
     private String paramMemRef(int idx) {
         int offset = (idx + 1) * 8;
         return "-" + offset + "(%rbp)";
+    }
+
+    // Busca recursivamente variáveis declaradas dentro de blocos de comandos
+    private void addInnerVars(List<Command> commands, FunDeclaration f, Set<String> vars) {
+        if (commands == null) return;
+
+        for (Command c : commands) {
+            if (c instanceof VarDeclCommand vdc) {
+                vars.add(mangleLocalName(f, vdc.name()));
+            } else if (c instanceof IfCommand ic) {
+                addInnerVars(ic.thenPart(), f, vars);
+                addInnerVars(ic.elsePart(), f, vars);
+            } else if (c instanceof WhileCommand wc) {
+                addInnerVars(wc.body(), f, vars);
+            }
+        }
     }
 }

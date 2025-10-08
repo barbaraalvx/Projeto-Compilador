@@ -15,6 +15,7 @@ public enum TypeEnum {
     LCHAVE("{"),
     RCHAVE("}"),
     RETURN("return"),
+    PRINT("print"),
     IF("if"),
     ELSE("else"),
     WHILE("while"),
@@ -24,8 +25,20 @@ public enum TypeEnum {
     FUN("fun"),
     VAR("var"),
     MAIN("main"),
-    VIRGULA(",");
-
+    VIRGULA(","),
+    ATRIB_SOMA("=+"),
+    ATRIB_SUBTRACAO("=-"),
+    ATRIB_MULTIPLICACAO("=*"),
+    ATRIB_DIVISAO("=/"),
+    MENOR_IGUAL("<="),
+    MAIOR_IGUAL(">="),
+    DIFERENTE("!="),
+    MODULO("%"),
+    DIVISAO_INTEIRA("//"),
+    EXPONENCIACAO("**"),
+    E_LOGICO("&&"),
+    OU_LOGICO("||"),
+    NEGACAO("!");
 
     private final String label;
 

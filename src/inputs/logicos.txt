@@ -1,0 +1,22 @@
+fun testarLogicos() {
+    var a = 5;
+    var b = 2;
+    var c = 0;
+
+    var x = (a > b) && (b > c);
+    var y = (a < b) || (b < c);
+    var z = !(a < b);
+    var w = (a > b) && !(c == 0);
+
+    if (x && z) {
+        var resultado = 100;
+    } else {
+        var resultado = 200;
+    }
+
+    return resultado;
+}
+
+main {
+    return testarLogicos();
+}

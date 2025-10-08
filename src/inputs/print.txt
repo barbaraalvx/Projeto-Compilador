@@ -1,0 +1,11 @@
+fun teste() {
+    var a = 10;
+    var b = 20;
+    print(a);
+    print(a + b);
+    return 0;
+}
+
+main {
+    return teste();
+}

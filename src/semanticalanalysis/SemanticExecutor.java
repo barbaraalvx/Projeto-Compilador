@@ -1,8 +1,8 @@
 package semanticalanalysis;
 
 import java.util.*;
-import syntacticanalysis.*;
 import semanticalanalysis.exceptions.SemanticException;
+import syntacticanalysis.*;
 import syntacticanalysis.commands.*;
 import syntacticanalysis.expression.*;
 
@@ -60,6 +60,34 @@ public class SemanticExecutor {
             return;
         }
 
+        if (c instanceof CompoundAssignCommand ca) {
+            String name = ca.var();
+            int currentVal;
+            if (locals != null && locals.containsKey(name)) {
+                currentVal = locals.get(name);
+            } else if (globals.containsKey(name)) {
+                currentVal = globals.get(name);
+            } else {
+                throw new SemanticException("Variável não declarada: " + name);
+            }
+            
+            int exprVal = eval(ca.expr(), globals, locals);
+            int newVal = switch (ca.operator()) {
+                case ATRIB_SOMA -> currentVal + exprVal;
+                case ATRIB_SUBTRACAO -> currentVal - exprVal;
+                case ATRIB_MULTIPLICACAO -> currentVal * exprVal;
+                case ATRIB_DIVISAO -> currentVal / exprVal;
+                default -> throw new SemanticException("Operador composto não suportado: " + ca.operator());
+            };
+            
+            if (locals != null && locals.containsKey(name)) {
+                locals.put(name, newVal);
+            } else {
+                globals.put(name, newVal);
+            }
+            return;
+        }
+
         if (c instanceof VarDeclCommand v) {
             int val = eval(v.expr(), globals, locals);
             if (locals != null) {
@@ -87,6 +115,12 @@ public class SemanticExecutor {
         if (c instanceof ReturnCommand r) {
             // interrompe execução e devolve valor
             throw new ReturnValue(eval(r.expr(), globals, locals));
+        }
+
+        else if (c instanceof PrintCommand p) {
+            int val = eval(p.getExpr(), globals, locals);
+            System.out.println(val); // imprime no console na execução semântica
+            return;
         }
 
         throw new IllegalStateException("Comando desconhecido: " + c.getClass());
@@ -117,7 +151,23 @@ public class SemanticExecutor {
                 case MENOR -> (a < c) ? 1 : 0;
                 case MAIOR -> (a > c) ? 1 : 0;
                 case IGUALDADE -> (a == c) ? 1 : 0;
+                case MENOR_IGUAL -> (a <= c) ? 1 : 0;
+                case MAIOR_IGUAL -> (a >= c) ? 1 : 0;
+                case DIFERENTE -> (a != c) ? 1 : 0;
+                case MODULO -> a % c;
+                case DIVISAO_INTEIRA -> a / c;
+                case EXPONENCIACAO -> (int) Math.pow(a, c);
+                case E_LOGICO -> ((a != 0) && (c != 0)) ? 1 : 0;
+                case OU_LOGICO -> ((a != 0) || (c != 0)) ? 1 : 0;
                 default -> throw new IllegalStateException("Operador não suportado: " + b.getOperator());
+            };
+        }
+
+        if (e instanceof UnaryOperation u) {
+            int val = eval(u.getOperand(), globals, locals);
+            return switch (u.getOperator()) {
+                case NEGACAO -> (val == 0 ? 1 : 0);
+                default -> throw new IllegalStateException("Operador unário não suportado: " + u.getOperator());
             };
         }
 
@@ -131,7 +181,7 @@ public class SemanticExecutor {
             }
 
             Map<String,Integer> newLocals = new HashMap<>();
-            List<String> params = fun.getParameters(); // ✅ ajustado
+            List<String> params = fun.getParameters();
             for (int i = 0; i < params.size(); i++) {
                 newLocals.put(params.get(i), argVals.get(i));
             }

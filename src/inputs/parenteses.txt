@@ -1,5 +1,0 @@
-main {
-  var x = 2;
-  var y = 3;
-  return x + y * (x + y);
-}
